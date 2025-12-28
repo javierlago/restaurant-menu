@@ -1,0 +1,250 @@
+.container {
+    padding-bottom: var(--spacing-xxl);
+}
+
+.loginContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+}
+
+.loginForm {
+    background-color: var(--color-surface);
+    padding: var(--spacing-xl);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    /* Increased gap */
+    width: 90%;
+    /* Responsive width */
+    max-width: 400px;
+    box-shadow: var(--shadow-lg);
+}
+
+.loginForm button {
+    width: 100%;
+    padding: var(--spacing-md);
+    font-size: 1.1rem;
+    justify-content: center;
+}
+
+.header {
+    margin-bottom: var(--spacing-lg);
+}
+
+.controls {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-sm);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tab {
+    background: none;
+    border: none;
+    color: var(--color-text-muted);
+    font-size: 1.1rem;
+    padding: var(--spacing-sm) var(--spacing-md);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+}
+
+.activeTab {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+}
+
+.addButton {
+    background-color: var(--color-primary);
+    color: var(--color-background);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: var(--spacing-md);
+}
+
+.formPanel {
+    background-color: var(--color-surface);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-xl);
+    animation: fadeIn 0.3s ease;
+}
+
+.formGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+    margin: var(--spacing-md) 0;
+}
+
+@media (max-width: 768px) {
+    .formGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .miniForm {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .miniForm .input {
+        width: 100%;
+    }
+
+    .controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .tab {
+        width: 100%;
+        text-align: center;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .activeTab {
+        border-bottom: 2px solid var(--color-primary);
+        background-color: var(--color-surface-hover);
+    }
+
+    .row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+
+    .rowActions {
+        width: 100%;
+        justify-content: flex-end;
+        border-top: 1px solid var(--border-color);
+        padding-top: var(--spacing-sm);
+    }
+}
+
+.input,
+.select {
+    background-color: var(--color-background);
+    border: 1px solid var(--border-color);
+    color: var(--color-text);
+    padding: var(--spacing-sm);
+    /* Increased padding for touch */
+    min-height: 44px;
+    /* Standard touch target size */
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+}
+
+.textarea {
+    grid-column: 1 / -1;
+    min-height: 100px;
+}
+
+.submitBtn {
+    width: 100%;
+    background-color: var(--color-success);
+    color: white;
+    padding: var(--spacing-md);
+    /* Larger touch target */
+    border-radius: var(--radius-md);
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-top: var(--spacing-sm);
+}
+
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.row {
+    background-color: var(--color-surface);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.hiddenRow {
+    opacity: 0.6;
+    background-color: var(--color-surface-hover);
+}
+
+.rowInfo {
+    display: flex;
+    flex-direction: column;
+}
+
+.itemName {
+    font-weight: 600;
+}
+
+.itemCategory {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+}
+
+.rowActions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.priceTag {
+    font-family: monospace;
+    font-size: 1.1rem;
+    color: var(--color-primary);
+}
+
+.btnEdit,
+.btnIcon,
+.btnDelete {
+    background: none;
+    font-size: 1.1rem;
+    padding: 6px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btnEdit {
+    color: var(--color-text);
+}
+
+.btnIcon {
+    color: var(--color-text-muted);
+}
+
+.btnDelete {
+    color: var(--color-accent);
+}
+
+.categoryPanel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.miniForm {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

@@ -1,0 +1,59 @@
+:root {
+  /* Brand Specific Palette */
+  --color-brand-brown: rgb(73, 33, 19);
+  --color-brand-cream: rgb(246, 236, 211);
+  --color-brand-accent: #C7A17A;
+  /* Complementary lighter brown/gold */
+
+  --color-primary: var(--color-brand-brown);
+  --color-primary-hover: #5D2A18;
+  --color-accent: #D35400;
+  --color-success: #27AE60;
+
+  /* Fonts */
+  --font-family-sans: 'Outfit', 'Inter', system-ui, sans-serif;
+  --font-family-serif: 'Playfair Display', serif;
+
+  /* Spacing & Radius */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-xxl: 3rem;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Light Mode */
+:root[data-theme="light"] {
+  --color-background: var(--color-brand-cream);
+  --color-surface: #FFFDF5;
+  /* Slightly lighter cream for cards */
+  --color-surface-hover: #F2E8D5;
+  --color-text: var(--color-brand-brown);
+  --color-text-muted: #8B5E3C;
+  --border-color: rgba(73, 33, 19, 0.2);
+  --shadow-glow: 0 0 10px rgba(73, 33, 19, 0.1);
+}
+
+/* Dark Mode */
+:root[data-theme="dark"] {
+  --color-background: #1A0F05;
+  /* Very dark brown, almost black */
+  --color-surface: #2E1B0E;
+  --color-surface-hover: #3D2514;
+  --color-text: var(--color-brand-cream);
+  --color-primary: var(--color-brand-cream);
+  /* Switch primary to light for contrast */
+  --color-text-muted: #C7A17A;
+  --border-color: rgba(246, 236, 211, 0.2);
+  --shadow-glow: 0 0 15px rgba(246, 236, 211, 0.15);
+}

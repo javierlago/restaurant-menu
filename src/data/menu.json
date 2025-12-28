@@ -1,0 +1,92 @@
+[
+    {
+        "id": "1",
+        "name": "Jamón Ibérico de Bellota",
+        "category": "entrantes",
+        "description": "Ración de jamón 100% ibérico, cortado a cuchillo. Acompañado de picos artesanos.",
+        "price": 24.50,
+        "image": "https://images.unsplash.com/photo-1579631542721-348df8f5c225?q=80&w=600&auto=format&fit=crop",
+        "allergens": [],
+        "portionSize": "Ración",
+        "isVisible": true
+    },
+    {
+        "id": "2",
+        "name": "Croquetas de Boletus",
+        "category": "entrantes",
+        "description": "Croquetas caseras cremosas de boletus edulis.",
+        "price": 12.00,
+        "image": "https://images.unsplash.com/photo-1560611387-f273ca80d5d5?q=80&w=600&auto=format&fit=crop",
+        "allergens": [
+            "gluten",
+            "lactose",
+            "huevos"
+        ],
+        "portionSize": "6 unidades",
+        "isVisible": true
+    },
+    {
+        "id": "3",
+        "name": "Arroz del Senyoret",
+        "category": "arroces",
+        "description": "Arroz con todo pelado: gambas, calamares y rape.",
+        "price": 16.50,
+        "image": "https://images.unsplash.com/photo-1623961990059-2843779796e0?q=80&w=600&auto=format&fit=crop",
+        "allergens": [
+            "pescado",
+            "crustaceos"
+        ],
+        "portionSize": "min. 2 pax (precio p.p)",
+        "isVisible": true
+    },
+    {
+        "id": "4",
+        "name": "Paella Valenciana",
+        "category": "arroces",
+        "description": "La auténtica paella con pollo, conejo, bajoqueta y garrofó.",
+        "price": 15.00,
+        "image": "https://images.unsplash.com/photo-1551025700-6677464048dc?q=80&w=600&auto=format&fit=crop",
+        "allergens": [],
+        "portionSize": "min. 2 pax (precio p.p)",
+        "isVisible": true
+    },
+    {
+        "id": "5",
+        "name": "Lubina a la Espalda",
+        "category": "pescados",
+        "description": "Lubina fresca cocinada a la plancha con refrito de ajos y guindilla.",
+        "price": 22.00,
+        "image": "https://images.unsplash.com/photo-1615141982880-19ed7e6656ac?q=80&w=600&auto=format&fit=crop",
+        "allergens": [
+            "pescado"
+        ],
+        "portionSize": "400-500g",
+        "isVisible": true
+    },
+    {
+        "id": "6",
+        "name": "Chuletón de Vaca Vieja",
+        "category": "carnes",
+        "description": "Maduración 45 días. Se sirve trinchado con piedra caliente.",
+        "price": 55.00,
+        "image": "https://images.unsplash.com/photo-1600891964092-4316c288032e?q=80&w=600&auto=format&fit=crop",
+        "allergens": [],
+        "portionSize": "1kg aprox.",
+        "isVisible": true
+    },
+    {
+        "id": "7",
+        "name": "Tarta de Queso Fluida",
+        "category": "fuera_de_carta",
+        "description": "Nuestra especialidad. Cremosa, con un toque de queso azul.",
+        "price": 7.50,
+        "image": "https://plus.unsplash.com/premium_photo-1694850982544-245842825318?q=80&w=600&auto=format&fit=crop",
+        "allergens": [
+            "lactose",
+            "huevos",
+            "gluten"
+        ],
+        "portionSize": "Individual",
+        "isVisible": true
+    }
+]
