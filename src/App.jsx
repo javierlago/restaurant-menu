@@ -5,21 +5,24 @@ import CategoryView from './pages/CategoryView';
 import AdminDashboard from './pages/AdminDashboard';
 import { MenuProvider } from './context/MenuContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { ConfigProvider } from './context/ConfigContext';
 
 function App() {
   return (
     <Router>
-      <ThemeProvider>
-        <MenuProvider>
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/category/:id" element={<CategoryView />} />
-              <Route path="/admin" element={<AdminDashboard />} />
-            </Routes>
-          </Layout>
-        </MenuProvider>
-      </ThemeProvider>
+      <ConfigProvider>
+        <ThemeProvider>
+          <MenuProvider>
+            <Layout>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/category/:id" element={<CategoryView />} />
+                <Route path="/admin" element={<AdminDashboard />} />
+              </Routes>
+            </Layout>
+          </MenuProvider>
+        </ThemeProvider>
+      </ConfigProvider>
     </Router>
   )
 }

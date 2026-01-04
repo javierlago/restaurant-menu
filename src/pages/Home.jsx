@@ -11,7 +11,7 @@ const Home = () => {
             <p className={styles.subtitle}>Descubre una experiencia gastronómica única en A Chabola</p>
 
             <div className={styles.grid}>
-                {categories.map((cat) => (
+                {categories.filter(cat => cat.isVisible !== false).map((cat) => (
                     <Link to={`/category/${cat.id}`} key={cat.id} className={styles.card}>
                         <div className={styles.imageContainer}>
                             <img src={cat.image} alt={cat.name} className={styles.image} />

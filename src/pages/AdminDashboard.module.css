@@ -248,3 +248,15 @@
         transform: translateY(0);
     }
 }
+
+.inputGroup {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.inputGroup label {
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+}

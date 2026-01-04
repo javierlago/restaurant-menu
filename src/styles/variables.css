@@ -11,8 +11,9 @@
   --color-success: #27AE60;
 
   /* Fonts */
-  --font-family-sans: 'Outfit', 'Inter', system-ui, sans-serif;
-  --font-family-serif: 'Playfair Display', serif;
+  /* Fonts */
+  --font-family-sans: 'Inter', system-ui, sans-serif;
+  --font-family-serif: 'Montserrat', sans-serif;
 
   /* Spacing & Radius */
   --spacing-xs: 0.25rem;

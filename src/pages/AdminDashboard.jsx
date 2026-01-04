@@ -1,13 +1,16 @@
 import { useState } from 'react';
 import { useMenu } from '../context/MenuContext';
-import { FaEye, FaEyeSlash, FaTrash, FaPlus, FaEdit, FaTimes } from 'react-icons/fa';
+import { useConfig } from '../context/ConfigContext';
+import { THEMES } from '../data/themes';
+import { FaEye, FaEyeSlash, FaTrash, FaPlus, FaEdit, FaTimes, FaCheck } from 'react-icons/fa';
 import styles from './AdminDashboard.module.css';
 
 const AdminDashboard = () => {
-    const { menuItems, categories, toggleVisibility, updateDish, addDish, deleteDish, addCategory, updateCategory, deleteCategory } = useMenu();
+    const { menuItems, categories, toggleVisibility, updateDish, addDish, deleteDish, addCategory, updateCategory, deleteCategory, toggleCategoryVisibility } = useMenu();
+    const { config, updateConfig, updateColor } = useConfig();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [password, setPassword] = useState('');
-    const [viewMode, setViewMode] = useState('dishes'); // 'dishes' | 'categories'
+    const [viewMode, setViewMode] = useState('dishes'); // 'dishes' | 'categories' | 'branding'
 
     // Form State
     const [isFormVisible, setIsFormVisible] = useState(false);
@@ -106,6 +109,7 @@ const AdminDashboard = () => {
                 <div className={styles.controls}>
                     <button className={`${styles.tab} ${viewMode === 'dishes' ? styles.activeTab : ''}`} onClick={() => setViewMode('dishes')}>Platos</button>
                     <button className={`${styles.tab} ${viewMode === 'categories' ? styles.activeTab : ''}`} onClick={() => setViewMode('categories')}>Categorías</button>
+                    <button className={`${styles.tab} ${viewMode === 'branding' ? styles.activeTab : ''}`} onClick={() => setViewMode('branding')}>Personalización</button>
                 </div>
             </div>
 
@@ -119,15 +123,36 @@ const AdminDashboard = () => {
                         <form onSubmit={handleSaveDish} className={styles.formPanel}>
                             <h3>{editingDishId ? 'Editar Plato' : 'Nuevo Plato'}</h3>
                             <div className={styles.formGrid}>
-                                <input placeholder="Nombre" value={dishForm.name} onChange={e => setDishForm({ ...dishForm, name: e.target.value })} className={styles.input} required />
-                                <select value={dishForm.category} onChange={e => setDishForm({ ...dishForm, category: e.target.value })} className={styles.select}>
-                                    {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-                                </select>
-                                <input type="number" step="0.01" placeholder="Precio" value={dishForm.price} onChange={e => setDishForm({ ...dishForm, price: e.target.value })} className={styles.input} required />
-                                <input placeholder="Porción" value={dishForm.portionSize} onChange={e => setDishForm({ ...dishForm, portionSize: e.target.value })} className={styles.input} />
-                                <input placeholder="URL Imagen" value={dishForm.image} onChange={e => setDishForm({ ...dishForm, image: e.target.value })} className={styles.input} />
-                                <input placeholder="Alérgenos (coma)" value={dishForm.allergens} onChange={e => setDishForm({ ...dishForm, allergens: e.target.value })} className={styles.input} />
-                                <textarea placeholder="Descripción" value={dishForm.description} onChange={e => setDishForm({ ...dishForm, description: e.target.value })} className={`${styles.input} ${styles.textarea}`} />
+                                <div className={styles.inputGroup}>
+                                    <label>Nombre del Plato</label>
+                                    <input placeholder="Ej. Paella Valenciana" value={dishForm.name} onChange={e => setDishForm({ ...dishForm, name: e.target.value })} className={styles.input} required />
+                                </div>
+                                <div className={styles.inputGroup}>
+                                    <label>Categoría</label>
+                                    <select value={dishForm.category} onChange={e => setDishForm({ ...dishForm, category: e.target.value })} className={styles.select}>
+                                        {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                                    </select>
+                                </div>
+                                <div className={styles.inputGroup}>
+                                    <label>Precio (€)</label>
+                                    <input type="number" step="0.01" placeholder="0.00" value={dishForm.price} onChange={e => setDishForm({ ...dishForm, price: e.target.value })} className={styles.input} required />
+                                </div>
+                                <div className={styles.inputGroup}>
+                                    <label>Tamaño / Porción</label>
+                                    <input placeholder="Ej. 1 Persona, 500g..." value={dishForm.portionSize} onChange={e => setDishForm({ ...dishForm, portionSize: e.target.value })} className={styles.input} />
+                                </div>
+                                <div className={styles.inputGroup}>
+                                    <label>URL de la Imagen</label>
+                                    <input placeholder="https://..." value={dishForm.image} onChange={e => setDishForm({ ...dishForm, image: e.target.value })} className={styles.input} />
+                                </div>
+                                <div className={styles.inputGroup}>
+                                    <label>Alérgenos</label>
+                                    <input placeholder="Ej. Gluten, Lactosa (separados por coma)" value={dishForm.allergens} onChange={e => setDishForm({ ...dishForm, allergens: e.target.value })} className={styles.input} />
+                                </div>
+                                <div className={`${styles.inputGroup}`} style={{ gridColumn: '1 / -1' }}>
+                                    <label>Descripción</label>
+                                    <textarea placeholder="Describe el plato..." value={dishForm.description} onChange={e => setDishForm({ ...dishForm, description: e.target.value })} className={`${styles.input} ${styles.textarea}`} />
+                                </div>
                             </div>
                             <button type="submit" className={styles.submitBtn}>{editingDishId ? 'Actualizar' : 'Guardar'}</button>
                         </form>
@@ -167,6 +192,9 @@ const AdminDashboard = () => {
                                 <span className={styles.itemName}>{cat.name}</span>
                                 <div className={styles.rowActions}>
                                     <button onClick={() => handleEditCategoryClick(cat)} className={styles.btnEdit}><FaEdit /></button>
+                                    <button onClick={() => toggleCategoryVisibility(cat.id)} className={styles.btnIcon} title={cat.isVisible !== false ? "Ocultar" : "Mostrar"}>
+                                        {cat.isVisible !== false ? <FaEye /> : <FaEyeSlash />}
+                                    </button>
                                     <button onClick={() => deleteCategory(cat.id)} className={styles.btnDelete}><FaTrash /></button>
                                 </div>
                             </div>
@@ -174,8 +202,82 @@ const AdminDashboard = () => {
                     </div>
                 </div>
             )}
+
+            {viewMode === 'branding' && (
+                <div className={styles.formPanel}>
+                    <h3>Personalización de Marca</h3>
+
+                    <div className={styles.section}>
+                        <h4>Identidad</h4>
+                        <div className={styles.formGrid}>
+                            <div className={styles.inputGroup}>
+                                <label>Nombre del Restaurante</label>
+                                <input
+                                    value={config.restaurantName}
+                                    onChange={(e) => updateConfig('restaurantName', e.target.value)}
+                                    className={styles.input}
+                                />
+                            </div>
+                            <div className={styles.inputGroup}>
+                                <label>Mostrar Nombre</label>
+                                <input
+                                    type="checkbox"
+                                    checked={config.showName}
+                                    onChange={(e) => updateConfig('showName', e.target.checked)}
+                                    style={{ marginLeft: '10px', transform: 'scale(1.5)' }}
+                                />
+                            </div>
+                            <div className={styles.inputGroup}>
+                                <label>URL del Icono/Logo</label>
+                                <input
+                                    value={config.icon}
+                                    onChange={(e) => updateConfig('icon', e.target.value)}
+                                    className={styles.input}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className={styles.section} style={{ marginTop: '2rem' }}>
+                        <h4>Tema de Color</h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '15px' }}>
+                            {THEMES.map(theme => (
+                                <button
+                                    key={theme.id}
+                                    onClick={() => updateConfig('themeId', theme.id)}
+                                    style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        gap: '10px',
+                                        padding: '15px',
+                                        borderRadius: '8px',
+                                        border: config.themeId === theme.id ? `2px solid var(--color-primary)` : '1px solid var(--border-color)',
+                                        backgroundColor: 'var(--color-surface)',
+                                        cursor: 'pointer',
+                                        position: 'relative'
+                                    }}
+                                >
+                                    {config.themeId === theme.id && (
+                                        <div style={{ position: 'absolute', top: '5px', right: '5px', color: 'var(--color-success)' }}>
+                                            <FaCheck />
+                                        </div>
+                                    )}
+                                    <div style={{ display: 'flex', gap: '5px' }}>
+                                        <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: theme.colors.light.primary, border: '1px solid #ccc' }}></div>
+                                        <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: theme.colors.light.secondary, border: '1px solid #ccc' }}></div>
+                                        <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: theme.colors.light.background, border: '1px solid #ccc' }}></div>
+                                    </div>
+                                    <span style={{ fontWeight: '500', fontSize: '0.9rem' }}>{theme.name}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
+
 };
 
 export default AdminDashboard;
