@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMenu } from '../context/MenuContext';
 import { useConfig } from '../context/ConfigContext';
+import { supabase } from '../supabase/client';
 import { THEMES } from '../data/themes';
 import { FaEye, FaEyeSlash, FaTrash, FaPlus, FaEdit, FaTimes, FaCheck } from 'react-icons/fa';
 import styles from './AdminDashboard.module.css';
@@ -9,8 +10,15 @@ const AdminDashboard = () => {
     const { menuItems, categories, toggleVisibility, updateDish, addDish, deleteDish, addCategory, updateCategory, deleteCategory, toggleCategoryVisibility } = useMenu();
     const { config, updateConfig, updateColor } = useConfig();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [viewMode, setViewMode] = useState('dishes'); // 'dishes' | 'categories' | 'branding'
+
+    // Auth State
+    const [isRecovering, setIsRecovering] = useState(false); // Can "Forgot Password" mode
+    const [recoveryEmail, setRecoveryEmail] = useState('');
+    const [showPasswordReset, setShowPasswordReset] = useState(false); // Show "New Password" inputs
+    const [newPassword, setNewPassword] = useState('');
 
     // Form State
     const [isFormVisible, setIsFormVisible] = useState(false);
@@ -18,14 +26,82 @@ const AdminDashboard = () => {
     const [dishForm, setDishForm] = useState({
         name: '', category: 'entrantes', price: '', description: '', allergens: '', portionSize: '', image: ''
     });
+    const [imageFile, setImageFile] = useState(null);
 
     const [editingCategoryId, setEditingCategoryId] = useState(null);
     const [categoryForm, setCategoryForm] = useState({ name: '', image: '' });
+    const [categoryImageFile, setCategoryImageFile] = useState(null);
 
-    const handleLogin = (e) => {
+    // Check for existing session or password recovery event
+    useEffect(() => {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) setIsAuthenticated(true);
+        });
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'SIGNED_IN') {
+                setIsAuthenticated(true);
+            } else if (event === 'SIGNED_OUT') {
+                setIsAuthenticated(false);
+            } else if (event === 'PASSWORD_RECOVERY') {
+                setShowPasswordReset(true);
+            }
+        });
+
+        return () => subscription.unsubscribe();
+    }, []);
+
+    const handleLogin = async (e) => {
         e.preventDefault();
-        if (password === 'admin123') setIsAuthenticated(true);
-        else alert('Contraseña incorrecta');
+        try {
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+
+            if (error) {
+                alert('Error: ' + error.message);
+            } else {
+                setIsAuthenticated(true);
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            alert('Error de conexión');
+        }
+    };
+
+    const handleForgotPassword = async (e) => {
+        e.preventDefault();
+        try {
+            const { data, error } = await supabase.auth.resetPasswordForEmail(recoveryEmail, {
+                redirectTo: window.location.origin + '/admin',
+            });
+            if (error) throw error;
+            alert('Correo de recuperación enviado. Revisa tu bandeja de entrada.');
+            setIsRecovering(false);
+        } catch (error) {
+            alert('Error al enviar correo: ' + error.message);
+        }
+    };
+
+    const handleUpdatePassword = async (e) => {
+        e.preventDefault();
+        try {
+            const { data, error } = await supabase.auth.updateUser({
+                password: newPassword
+            });
+            if (error) throw error;
+            alert('Contraseña actualizada con éxito');
+            setShowPasswordReset(false);
+            setNewPassword('');
+        } catch (error) {
+            alert('Error al actualizar contraseña: ' + error.message);
+        }
+    };
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        setIsAuthenticated(false);
     };
 
     // Dish Actions
@@ -37,9 +113,10 @@ const AdminDashboard = () => {
             description: dish.description,
             allergens: dish.allergens.join(', '),
             portionSize: dish.portionSize,
-            image: dish.image
+            image: dish.image // Keep URL for display
         });
         setEditingDishId(dish.id);
+        setImageFile(null); // Reset file input
         setIsFormVisible(true);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -53,10 +130,10 @@ const AdminDashboard = () => {
         };
 
         if (editingDishId) {
-            updateDish(editingDishId, formattedDish);
+            updateDish(editingDishId, formattedDish, imageFile);
             alert('Plato actualizado');
         } else {
-            addDish(formattedDish);
+            addDish(formattedDish, imageFile);
             alert('Plato añadido');
         }
         resetForm();
@@ -65,6 +142,7 @@ const AdminDashboard = () => {
     const resetForm = () => {
         setDishForm({ name: '', category: categories[0]?.id || '', price: '', description: '', allergens: '', portionSize: '', image: '' });
         setEditingDishId(null);
+        setImageFile(null);
         setIsFormVisible(false);
     };
 
@@ -72,6 +150,7 @@ const AdminDashboard = () => {
     const handleEditCategoryClick = (cat) => {
         setCategoryForm({ name: cat.name, image: cat.image });
         setEditingCategoryId(cat.id);
+        setCategoryImageFile(null);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -80,23 +159,80 @@ const AdminDashboard = () => {
         if (!categoryForm.name) return;
 
         if (editingCategoryId) {
-            updateCategory(editingCategoryId, categoryForm);
+            updateCategory(editingCategoryId, categoryForm, categoryImageFile);
             alert('Categoría actualizada');
             setEditingCategoryId(null);
         } else {
-            addCategory(categoryForm.name, categoryForm.image);
+            addCategory(categoryForm.name, categoryImageFile);
             alert('Categoría añadida');
         }
         setCategoryForm({ name: '', image: '' });
+        setCategoryImageFile(null);
     };
 
     if (!isAuthenticated) {
         return (
             <div className={styles.loginContainer}>
-                <form onSubmit={handleLogin} className={styles.loginForm}>
-                    <h2>Acceso Propietario</h2>
-                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Contraseña" className={styles.input} />
-                    <button type="submit" className={styles.button}>Entrar</button>
+                {isRecovering ? (
+                    <form onSubmit={handleForgotPassword} className={styles.loginForm}>
+                        <h2>Recuperar Contraseña</h2>
+                        <p style={{ textAlign: 'center', marginBottom: '1rem', color: '#666' }}>
+                            Introduce tu correo para recibir un enlace de recuperación.
+                        </p>
+                        <input
+                            type="email"
+                            value={recoveryEmail}
+                            onChange={(e) => setRecoveryEmail(e.target.value)}
+                            placeholder="Tu Correo Electrónico"
+                            className={styles.input}
+                            required
+                        />
+                        <button type="submit" className={styles.button}>Enviar Correo</button>
+                        <button
+                            type="button"
+                            onClick={() => setIsRecovering(false)}
+                            style={{ background: 'none', border: 'none', color: 'var(--color-primary)', marginTop: '10px', cursor: 'pointer', textDecoration: 'underline' }}
+                        >
+                            Volver al Login
+                        </button>
+                    </form>
+                ) : (
+                    <form onSubmit={handleLogin} className={styles.loginForm}>
+                        <h2>Acceso Propietario</h2>
+                        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Correo Electrónico" className={styles.input} required />
+                        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Contraseña" className={styles.input} required />
+                        <button type="submit" className={styles.button}>Entrar</button>
+                        <button
+                            type="button"
+                            onClick={() => setIsRecovering(true)}
+                            style={{ background: 'none', border: 'none', color: '#666', marginTop: '10px', cursor: 'pointer', fontSize: '0.9rem' }}
+                        >
+                            ¿Olvidaste tu contraseña?
+                        </button>
+                    </form>
+                )}
+            </div>
+        );
+    }
+
+    if (showPasswordReset) {
+        return (
+            <div className={styles.loginContainer}>
+                <form onSubmit={handleUpdatePassword} className={styles.loginForm}>
+                    <h2>Nueva Contraseña</h2>
+                    <p style={{ textAlign: 'center', marginBottom: '1rem', color: '#666' }}>
+                        Introduce tu nueva contraseña.
+                    </p>
+                    <input
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="Nueva Contraseña"
+                        className={styles.input}
+                        required
+                        minLength={6}
+                    />
+                    <button type="submit" className={styles.button}>Actualizar Contraseña</button>
                 </form>
             </div>
         );
@@ -110,6 +246,7 @@ const AdminDashboard = () => {
                     <button className={`${styles.tab} ${viewMode === 'dishes' ? styles.activeTab : ''}`} onClick={() => setViewMode('dishes')}>Platos</button>
                     <button className={`${styles.tab} ${viewMode === 'categories' ? styles.activeTab : ''}`} onClick={() => setViewMode('categories')}>Categorías</button>
                     <button className={`${styles.tab} ${viewMode === 'branding' ? styles.activeTab : ''}`} onClick={() => setViewMode('branding')}>Personalización</button>
+                    <button onClick={handleLogout} className={styles.tab} style={{ marginLeft: 'auto', backgroundColor: '#e74c3c', color: 'white', borderColor: '#c0392b' }}>Salir</button>
                 </div>
             </div>
 
@@ -142,8 +279,25 @@ const AdminDashboard = () => {
                                     <input placeholder="Ej. 1 Persona, 500g..." value={dishForm.portionSize} onChange={e => setDishForm({ ...dishForm, portionSize: e.target.value })} className={styles.input} />
                                 </div>
                                 <div className={styles.inputGroup}>
-                                    <label>URL de la Imagen</label>
-                                    <input placeholder="https://..." value={dishForm.image} onChange={e => setDishForm({ ...dishForm, image: e.target.value })} className={styles.input} />
+                                    <label>Imagen del Plato</label>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={e => setImageFile(e.target.files[0])}
+                                        className={styles.input}
+                                    />
+                                    {dishForm.image && !imageFile && (
+                                        <div style={{ marginTop: '10px' }}>
+                                            <p style={{ fontSize: '0.8rem', marginBottom: '5px' }}>Imagen Actual:</p>
+                                            <img src={dishForm.image} alt="Preview" style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }} />
+                                        </div>
+                                    )}
+                                    {imageFile && (
+                                        <div style={{ marginTop: '10px' }}>
+                                            <p style={{ fontSize: '0.8rem', marginBottom: '5px' }}>Nueva Imagen:</p>
+                                            <img src={URL.createObjectURL(imageFile)} alt="Preview" style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }} />
+                                        </div>
+                                    )}
                                 </div>
                                 <div className={styles.inputGroup}>
                                     <label>Alérgenos</label>
@@ -179,10 +333,28 @@ const AdminDashboard = () => {
 
             {viewMode === 'categories' && (
                 <div className={styles.categoryPanel}>
-                    <form onSubmit={handleSaveCategory} className={styles.miniForm}>
+                    <form onSubmit={handleSaveCategory} className={styles.miniForm} style={{ alignItems: 'flex-start', flexWrap: 'wrap' }}>
                         <input placeholder="Nombre Categoría" value={categoryForm.name} onChange={e => setCategoryForm({ ...categoryForm, name: e.target.value })} className={styles.input} />
-                        <input placeholder="URL Imagen Fondo" value={categoryForm.image} onChange={e => setCategoryForm({ ...categoryForm, image: e.target.value })} className={styles.input} />
-                        <button type="submit" className={styles.addButton}>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={e => setCategoryImageFile(e.target.files[0])}
+                                className={styles.input}
+                            />
+                            {/* Previews */}
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                {categoryForm.image && !categoryImageFile && (
+                                    <img src={categoryForm.image} alt="Current" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
+                                )}
+                                {categoryImageFile && (
+                                    <img src={URL.createObjectURL(categoryImageFile)} alt="New" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
+                                )}
+                            </div>
+                        </div>
+
+                        <button type="submit" className={styles.addButton} style={{ height: 'fit-content' }}>
                             {editingCategoryId ? 'Actualizar' : <><FaPlus /> Añadir</>}
                         </button>
                     </form>

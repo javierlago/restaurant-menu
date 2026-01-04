@@ -1,13 +1,5 @@
 import { createContext, useState, useEffect, useContext } from 'react';
-import initialMenuData from '../data/menu.json';
-
-const INITIAL_CATEGORIES = [
-    { id: 'entrantes', name: 'Entrantes', image: 'https://images.unsplash.com/photo-1541529086526-db283c563270?q=80&w=800&auto=format&fit=crop', isVisible: true },
-    { id: 'arroces', name: 'Arroces', image: 'https://images.unsplash.com/photo-1596797038530-2c107229654b?q=80&w=800&auto=format&fit=crop', isVisible: true },
-    { id: 'pescados', name: 'Pescados', image: 'https://plus.unsplash.com/premium_photo-1699216538333-182ae3edcd7e?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', isVisible: true },
-    { id: 'carnes', name: 'Carnes', image: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?q=80&w=800&auto=format&fit=crop', isVisible: true },
-    { id: 'fuera_de_carta', name: 'Fuera de Carta', image: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?q=80&w=800&auto=format&fit=crop', isVisible: true }
-];
+import { supabase } from '../supabase/client';
 
 const MenuContext = createContext();
 
@@ -18,69 +10,267 @@ export const MenuProvider = ({ children }) => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Load Categories and Menu Items
+    // Initial Fetch
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const { data: dishesData, error: dishesError } = await supabase
+                .from('dishes')
+                .select('*')
+                .order('name');
+
+            const { data: categoriesData, error: categoriesError } = await supabase
+                .from('categories')
+                .select('*')
+                .order('name');
+
+            if (dishesError) throw dishesError;
+            if (categoriesError) throw categoriesError;
+
+            // Normalize data if needed (e.g. Supabase columns vs Frontend keys)
+            // Assuming Supabase columns match frontend keys: id, name, price, category, etc.
+            setMenuItems(dishesData || []);
+            setCategories(categoriesData || []);
+
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            // Fallback empty or alert? For now just log.
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const savedMenu = localStorage.getItem('restaurant_menu_data');
-        const savedCategories = localStorage.getItem('restaurant_categories_data');
+        fetchData();
 
-        setMenuItems(savedMenu ? JSON.parse(savedMenu) : initialMenuData);
-        setCategories(savedCategories ? JSON.parse(savedCategories) : INITIAL_CATEGORIES);
+        // Optional: Realtime subscription could be added here
+        const dishesSubscription = supabase
+            .channel('public:dishes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'dishes' }, fetchData)
+            .subscribe();
 
-        setLoading(false);
+        const categoriesSubscription = supabase
+            .channel('public:categories')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, fetchData)
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(dishesSubscription);
+            supabase.removeChannel(categoriesSubscription);
+        };
     }, []);
 
-    // Save changes
-    useEffect(() => {
-        if (!loading) {
-            localStorage.setItem('restaurant_menu_data', JSON.stringify(menuItems));
-            localStorage.setItem('restaurant_categories_data', JSON.stringify(categories));
+    const toggleVisibility = async (id) => {
+        const item = menuItems.find(i => i.id === id);
+        if (!item) return;
+
+        const { error } = await supabase
+            .from('dishes')
+            .update({ isVisible: !item.isVisible })
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error toggling visibility:', error);
+            alert('Error al actualizar la visibilidad');
+        } else {
+            // Optimistic update or wait for subscription
+            fetchData();
         }
-    }, [menuItems, categories, loading]);
-
-    const toggleVisibility = (id) => {
-        setMenuItems(prev => prev.map(item =>
-            item.id === id ? { ...item, isVisible: !item.isVisible } : item
-        ));
     };
 
-    const updateDish = (id, updatedFields) => {
-        setMenuItems(prev => prev.map(item =>
-            item.id === id ? { ...item, ...updatedFields } : item
-        ));
+    const uploadImage = async (file, path, bucket = 'dish-images') => {
+        // Sanitize path/filename to avoid "Invalid key" errors with special chars
+        const sanitizedPath = path.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9\/._-]/g, "");
+
+        const { data, error } = await supabase.storage
+            .from(bucket)
+            .upload(sanitizedPath, file, { upsert: true });
+
+        if (error) {
+            console.error('Error uploading image:', error);
+            throw error;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+            .from(bucket)
+            .getPublicUrl(sanitizedPath);
+
+        return publicUrl;
     };
 
-    const addDish = (newDish) => {
-        const dishWithId = { ...newDish, id: Date.now().toString(), isVisible: true };
-        setMenuItems(prev => [...prev, dishWithId]);
+    const updateDish = async (id, updatedFields, imageFile) => {
+        let imageUrl = updatedFields.image;
+
+        if (imageFile) {
+            try {
+                // Upload to folder with ID: dish-images/{id}/{filename}
+                // We trust uploadImage to sanitize the final path, but we construct the base here
+                const path = `${id}/${imageFile.name}`;
+                imageUrl = await uploadImage(imageFile, path, 'dish-images');
+            } catch (error) {
+                alert('Error al subir la imagen. El plato se actualizará sin la nueva imagen.');
+            }
+        }
+
+        const { error } = await supabase
+            .from('dishes')
+            .update({ ...updatedFields, image: imageUrl })
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error updating dish:', error);
+            alert('Error al actualizar el plato: ' + error.message);
+        } else {
+            fetchData();
+        }
     };
 
-    const deleteDish = (id) => {
-        setMenuItems(prev => prev.filter(item => item.id !== id));
+    const addDish = async (newDish, imageFile) => {
+        // 1. Insert dish first to get the ID (if DB generates it)
+        // However, user requested creating folder with ID. 
+        // If 'id' is auto-generated INT/BIGINT, we don't have it yet.
+        // We can upload AFTER insert if we need the real ID, or generate a UUID/Timestamp client-side for the folder.
+        // Given the prompt: "creates a record... and with the id of the created record... creates a folder"
+        // So we must Insert -> Get ID -> Upload -> Update with Image URL.
+
+        const { id: ignoredId, ...dishData } = newDish;
+
+        // Insert without image first (or with placeholder if required)
+        const { data, error } = await supabase
+            .from('dishes')
+            .insert([{ ...dishData, isVisible: true }])
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Error adding dish:', error);
+            alert('Error al añadir el plato: ' + error.message);
+            return;
+        }
+
+        const createdDish = data;
+
+        if (imageFile) {
+            try {
+                const path = `${createdDish.id}/${imageFile.name}`;
+                const imageUrl = await uploadImage(imageFile, path, 'dish-images');
+
+                // Update the dish with the image URL
+                await supabase
+                    .from('dishes')
+                    .update({ image: imageUrl })
+                    .eq('id', createdDish.id);
+
+            } catch (uploadError) {
+                alert('Plato creado, pero falló la subida de imagen: ' + uploadError.message);
+            }
+        }
+
+        fetchData();
+    };
+
+    const deleteDish = async (id) => {
+        const { error } = await supabase
+            .from('dishes')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error deleting dish:', error);
+            alert('Error al eliminar el plato');
+        } else {
+            fetchData();
+        }
     };
 
     // Category Actions
-    const addCategory = (name, image) => {
+    const addCategory = async (name, imageFile) => {
         const id = name.toLowerCase().replace(/\s+/g, '_');
-        const newCategory = { id, name, image, isVisible: true };
-        setCategories(prev => [...prev, newCategory]);
+
+        // Optimistically insert category first
+        const { error } = await supabase
+            .from('categories')
+            .insert([{ id, name, image: '', isVisible: true }]);
+
+        if (error) {
+            console.error('Error adding category:', error);
+            alert('Error al añadir categoría: ' + error.message);
+            return;
+        }
+
+        // Upload Image if present
+        if (imageFile) {
+            try {
+                const path = `${id}/${imageFile.name}`;
+                const imageUrl = await uploadImage(imageFile, path, 'categories-images');
+
+                // Update with image URL
+                await supabase
+                    .from('categories')
+                    .update({ image: imageUrl })
+                    .eq('id', id);
+
+            } catch (uploadError) {
+                alert('Categoría creada, pero falló la subida de imagen: ' + uploadError.message);
+            }
+        }
+
+        fetchData();
     };
 
-    const updateCategory = (id, updatedFields) => {
-        setCategories(prev => prev.map(cat =>
-            cat.id === id ? { ...cat, ...updatedFields } : cat
-        ));
+    const updateCategory = async (id, updatedFields, imageFile) => {
+        let imageUrl = updatedFields.image;
+
+        if (imageFile) {
+            try {
+                const path = `${id}/${imageFile.name}`;
+                imageUrl = await uploadImage(imageFile, path, 'categories-images');
+            } catch (error) {
+                alert('Error al subir imagen de categoría.');
+            }
+        }
+
+        const { error } = await supabase
+            .from('categories')
+            .update({ ...updatedFields, image: imageUrl })
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error updating category:', error);
+            alert('Error al actualizar categoría');
+        } else {
+            fetchData();
+        }
     };
 
-    const deleteCategory = (id) => {
-        setCategories(prev => prev.filter(c => c.id !== id));
-        // Optional: Hide/Remove items in this category? 
-        // For now, keeps items but they won't be reachable via category list.
+    const deleteCategory = async (id) => {
+        const { error } = await supabase
+            .from('categories')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error deleting category:', error);
+            alert('Error al eliminar categoría');
+        } else {
+            fetchData();
+        }
     };
 
-    const toggleCategoryVisibility = (id) => {
-        setCategories(prev => prev.map(cat =>
-            cat.id === id ? { ...cat, isVisible: !cat.isVisible } : cat
-        ));
+    const toggleCategoryVisibility = async (id) => {
+        const cat = categories.find(c => c.id === id);
+        if (!cat) return;
+
+        const { error } = await supabase
+            .from('categories')
+            .update({ isVisible: !cat.isVisible })
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error toggling category visibility:', error);
+        } else {
+            fetchData();
+        }
     };
 
     return (

@@ -6,15 +6,17 @@ import styles from './CategoryView.module.css';
 
 const CategoryView = () => {
     const { id } = useParams();
-    const { menuItems, loading } = useMenu();
+    const { menuItems, categories, loading } = useMenu();
 
     if (loading) return <div className={styles.container}>Cargando...</div>;
 
     // Filter dishes by category and visibility
-    const dishes = menuItems.filter(dish => dish.category === id && dish.isVisible);
+    // Ensure accurate type matching for comparison (Supabase IDs might be numbers or strings)
+    const dishes = menuItems.filter(dish => String(dish.category) === String(id) && dish.isVisible);
 
-    // Format category title
-    const title = id ? id.replace(/_/g, ' ').toUpperCase() : '';
+    // Find category to get real name
+    const categoryObj = categories.find(c => String(c.id) === String(id));
+    const title = categoryObj ? categoryObj.name : (id ? id.replace(/_/g, ' ').toUpperCase() : '');
 
     return (
         <div className={styles.container}>
