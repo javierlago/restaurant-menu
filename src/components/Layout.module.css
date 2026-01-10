@@ -17,22 +17,51 @@
 
 .topBar {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
+    position: relative;
+    height: 60px;
+    /* Fixed height for consistency */
 }
 
-.logo {
+/* Left: Logo Image */
+.logoLeft {
+    position: absolute;
+    left: 0;
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
+    height: 100%;
+    text-decoration: none;
+}
+
+/* Center: Restaurant Name */
+.logoCenter {
     font-family: var(--font-family-serif);
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     font-weight: 700;
     color: var(--color-primary);
     text-decoration: none;
+    text-align: center;
+    /* Ensure it's centered and doesn't overlap excessively if long, though collision is possible on small screens */
+    white-space: nowrap;
+}
+
+/* Right: Theme Toggle */
+.rightControls {
+    position: absolute;
+    right: 0;
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.logoImg {
+    height: 50px;
+    width: auto;
+    object-fit: contain;
 }
 
 .logoImg {

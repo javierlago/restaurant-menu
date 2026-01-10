@@ -1,10 +1,15 @@
 import styles from './DishCard.module.css';
+import ImagePlaceholder from './ImagePlaceholder';
 
 const DishCard = ({ dish }) => {
     return (
         <div className={styles.card}>
             <div className={styles.imageContainer}>
-                <img src={dish.image} alt={dish.name} className={styles.image} loading="lazy" />
+                {dish.image ? (
+                    <img src={dish.image} alt={dish.name} className={styles.image} loading="lazy" />
+                ) : (
+                    <ImagePlaceholder type="dish" className={styles.image} />
+                )}
                 <span className={styles.price}>{dish.price.toFixed(2)}€</span>
             </div>
 

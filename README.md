@@ -1,52 +1,113 @@
-# Carta Digital - A Chabola
+# 🍽️ Digital Menu - A Chabola
 
-Este proyecto es una aplicación web interactiva diseñada para facilitar la visualización y gestión de la carta del restaurante **A Chabola**. Ofrece una experiencia moderna y rápida tanto para los clientes como para el propietario.
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Supabase](https://img.shields.io/badge/Supabase-2-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## 🎯 Objetivo y Funcionalidad
-
-El objetivo principal es eliminar la dependencia de cartas físicas desactualizadas y permitir una gestión dinámica del menú.
-
-### Para el Restaurante (Propietario/Administrador)
-*   **Gestión Total de la Carta**: Permite **añadir, editar y retirar platos** en tiempo real.
-*   **Gestión de Existencias**: Si un plato se agota, se puede ocultar temporalmente de la carta con un solo clic, sin necesidad de borrarlo.
-*   **Personalización de Marca**: Desde el panel de administración se pueden modificar los **colores, el nombre del restaurante y el logotipo** para adaptar la aplicación a la identidad visual del negocio.
-
-### Para el Cliente
-*   **Acceso Rápido**: Visualización clara y atractiva de todos los platos, organizados por categorías.
-*   **Información Detallada**: Acceso a descripciones, precios y alérgenos de cada plato.
+A modern and elegant Progressive Web App (PWA) designed for dynamic visualization and management of the **A Chabola** restaurant menu. It allows customers to access the menu via QR codes and enables owners to manage all content in real-time.
 
 ---
 
-## 🚀 Cómo Ejecutar el Proyecto
+## ✨ Features
 
-Para ver y utilizar la aplicación en tu entorno local, sigue estos pasos:
+### 📱 For the Customer
+- **Interactive Menu**: Smooth dish visualization organized by categories.
+- **Dark/Light Mode**: Full support for user theme preferences.
+- **Dish Details**: Information on prices, descriptions, and allergens.
+- **PWA Experience**: Can be installed on the mobile home screen like a native app.
 
-### Prerrequisitos
-Asegúrate de tener instalado [Node.js](https://nodejs.org/) en tu ordenador.
-
-### Pasos
-1.  **Instalar las dependencias**:
-    Abre una terminal en la carpeta del proyecto y ejecuta:
-    ```bash
-    npm install
-    ```
-
-2.  **Iniciar la aplicación**:
-    Ejecuta el siguiente comando para arrancar el servidor de desarrollo:
-    ```bash
-    npm run dev
-    ```
-
-3.  **Abrir en el navegador**:
-    La terminal te mostrará una dirección (normalmente `http://localhost:5173/`). Abre esa URL en tu navegador web.
+### 🔐 Admin Dashboard
+- **Content Management (CRUD)**: Easily add, edit, and delete dishes and categories.
+- **Visibility Control**: Hide/show dishes or entire categories based on availability.
+- **Image Uploads**: Integration with Supabase Storage to manage dish photos.
+- **QR Generator**: Dynamic QR code creation for tables with download options:
+  - **PNG**: QR code only.
+  - **PDF**: Ready-to-print design including the restaurant logo.
+- **Visual Customization**: Change theme, restaurant name, and logo directly from the dashboard.
+- **Security**: Protected authentication and password recovery system via Supabase.
 
 ---
 
-## 🔑 Acceso al Panel de Administración
+## 💻 Tech Stack
 
-Para probar las funcionalidades de edición:
-1.  Navega a la sección de administración haciendo clic en el candado "Admin Access" en el pie de página o yendo a `/admin`.
-2.  La contraseña por defecto para este entorno de desarrollo es: **`admin123`**.
+### Frontend
+- **React 19**: Core UI library.
+- **Vite**: Fast build tool and development server.
+- **React Router Dom**: Navigation management.
+- **Context API**: Global state management (Menu, Config, Auth).
+- **React Icons**: Modern iconography.
+- **CSS Modules**: Encapsulated and responsive styling.
+
+### Backend & Tools
+- **Supabase**: 
+  - **PostgreSQL**: Database for dishes, categories, and configuration.
+  - **Authentication**: Admin user management.
+  - **Storage**: Image storage.
+- **jsPDF**: PDF report and menu generation.
+- **qrcode.react**: Dynamic QR code generation.
 
 ---
-*Desarrollado con React + Vite*
+
+## 🚀 Installation & Setup
+
+### Prerequisites
+- [Node.js](https://nodejs.org/) (version 18 or higher recommended).
+- A [Supabase](https://supabase.com/) account.
+
+### Steps
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/your-username/restaurant-menu.git
+   cd restaurant-menu
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Environment Variables Configuration**:
+   Create a `.env` file in the project root with your Supabase credentials:
+   ```env
+   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
+
+4. **Database Setup**:
+   Run the SQL script included in `db_setup.sql` in the SQL editor of your Supabase dashboard to create the necessary tables and Row Level Security (RLS) policies.
+
+5. **Run in development**:
+   ```bash
+   npm run dev
+   ```
+
+---
+
+## 🛠️ Deployment
+
+The project is optimized for deployment on platforms like **Vercel**, **Netlify**, or **GitHub Pages**.
+
+```bash
+npm run build
+```
+Upload the resulting `dist` folder to your favorite hosting service.
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License. See the `LICENSE` file for details.
+
+---
+
+## 📚 Documentation
+
+For more detailed technical information, please refer to:
+- [🏗️ Architecture Overview](docs/ARCHITECTURE.md): Project structure and data flow.
+- [🗄️ Database Schema](docs/DATABASE.md): Table definitions and RLS policies.
+- [🔐 Administrator Guide](docs/ADMIN_GUIDE.md): How to manage the menu and branding.
+
+---
+*Developed for A Chabola with ❤️*

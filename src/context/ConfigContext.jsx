@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { THEMES, getThemeById } from '../data/themes';
+import { getThemeById } from '../data/themes';
+import { supabase } from '../supabase/client';
 
 const ConfigContext = createContext();
 
@@ -9,40 +10,59 @@ const DEFAULT_CONFIG = {
     restaurantName: 'A Chabola',
     showName: true,
     icon: '/achabola.png',
-    themeId: 'classic' // Replaced 'colors' with 'themeId'
+    themeId: 'classic',
+    subtitle: 'Descubre una experiencia gastronómica única en A Chabola'
 };
 
 export const ConfigProvider = ({ children }) => {
     const [config, setConfig] = useState(DEFAULT_CONFIG);
     const [loading, setLoading] = useState(true);
+    const [configId, setConfigId] = useState(null); // database ID
 
-    // Load from localStorage
-    useEffect(() => {
-        const savedConfig = localStorage.getItem('restaurant_config');
-        if (savedConfig) {
-            try {
-                const parsed = JSON.parse(savedConfig);
-                // Ensure legacy config doesn't break app, default to 'classic' if invalid
-                const themeId = parsed.themeId || 'classic';
+    // Fetch config from Supabase
+    const fetchConfig = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('restaurant_config')
+                .select('*')
+                .limit(1)
+                .single();
 
+            if (data) {
                 setConfig({
-                    ...DEFAULT_CONFIG,
-                    ...parsed,
-                    themeId
+                    restaurantName: data.restaurant_name,
+                    showName: data.show_name,
+                    icon: data.icon || '/achabola.png',
+                    themeId: data.theme_id || 'classic',
+                    subtitle: data.subtitle || 'Descubre una experiencia gastronómica única en A Chabola'
                 });
-            } catch (e) {
-                console.error("Failed to parse config", e);
+                setConfigId(data.id);
+            } else if (error && error.code !== 'PGRST116') {
+                // PGRST116 is "The result contains 0 rows" which is fine (use default)
+                console.error('Error fetching config:', error);
             }
+        } catch (err) {
+            console.error('Unexpected error fetching config:', err);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
-    }, []);
+    };
 
-    // Save to localStorage
     useEffect(() => {
-        if (!loading) {
-            localStorage.setItem('restaurant_config', JSON.stringify(config));
-        }
-    }, [config, loading]);
+        fetchConfig();
+
+        // Realtime subscription
+        const subscription = supabase
+            .channel('public:restaurant_config')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'restaurant_config' }, (payload) => {
+                fetchConfig();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(subscription);
+        };
+    }, []);
 
     // Apply Theme Styles Dynamically
     useEffect(() => {
@@ -93,19 +113,93 @@ export const ConfigProvider = ({ children }) => {
 
     }, [config]);
 
-    const updateConfig = (key, value) => {
+    const updateConfig = async (key, value) => {
+        // Optimistic update
         setConfig(prev => ({
             ...prev,
             [key]: value
         }));
+
+        // Map frontend keys to DB columns
+        const dbKeyMap = {
+            restaurantName: 'restaurant_name',
+            showName: 'show_name',
+            icon: 'icon',
+            themeId: 'theme_id',
+            subtitle: 'subtitle'
+        };
+
+        const dbKey = dbKeyMap[key];
+        if (!dbKey) return;
+
+        try {
+            if (configId) {
+                await supabase
+                    .from('restaurant_config')
+                    .update({ [dbKey]: value })
+                    .eq('id', configId);
+            } else {
+                // First time save (insert)
+                // We need to map the whole current config + the new value
+                const currentDbData = {
+                    restaurant_name: config.restaurantName,
+                    show_name: config.showName,
+                    icon: config.icon,
+                    theme_id: config.themeId,
+                    subtitle: config.subtitle,
+                    [dbKey]: value
+                };
+
+                const { data } = await supabase
+                    .from('restaurant_config')
+                    .insert([currentDbData])
+                    .select()
+                    .single();
+
+                if (data) setConfigId(data.id);
+            }
+        } catch (error) {
+            console.error('Error updating config:', error);
+            // Revert optimistic update if needed (omitted for brevity)
+        }
     };
 
-    const resetToDefaults = () => {
+    const uploadLogo = async (file) => {
+        try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `logo-${Date.now()}.${fileExt}`;
+            const filePath = `${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('restaurant-assets')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('restaurant-assets')
+                .getPublicUrl(filePath);
+
+            updateConfig('icon', publicUrl);
+            return publicUrl;
+        } catch (error) {
+            console.error('Error uploading logo:', error);
+            throw error;
+        }
+    };
+
+    const resetToDefaults = async () => {
         setConfig(DEFAULT_CONFIG);
+        // Reset in DB too logic if needed
+    };
+
+    const updateColor = (key, value) => {
+        // Legacy support or remove if unused. keeping for safety but it does nothing to DB
+        console.warn('updateColor deprecated in favor of updateConfig');
     };
 
     return (
-        <ConfigContext.Provider value={{ config, updateConfig, resetToDefaults, loading }}>
+        <ConfigContext.Provider value={{ config, updateConfig, uploadLogo, resetToDefaults, loading, updateColor }}>
             {children}
         </ConfigContext.Provider>
     );

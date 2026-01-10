@@ -11,11 +11,22 @@ const Layout = ({ children }) => {
         <div className={styles.container}>
             <header className={styles.header}>
                 <div className={styles.topBar}>
-                    <Link to="/" className={styles.logo}>
+                    {/* Left: Logo Image */}
+                    <Link to="/" className={styles.logoLeft}>
                         <img src={config.icon || '/achabola.png'} alt={config.restaurantName} className={styles.logoImg} />
-                        {config.showName && <span>{config.restaurantName}</span>}
                     </Link>
-                    <ThemeToggle />
+
+                    {/* Center: Restaurant Name */}
+                    {config.showName && (
+                        <Link to="/" className={styles.logoCenter}>
+                            {config.restaurantName}
+                        </Link>
+                    )}
+
+                    {/* Right: Theme Toggle */}
+                    <div className={styles.rightControls}>
+                        <ThemeToggle />
+                    </div>
                 </div>
             </header>
 

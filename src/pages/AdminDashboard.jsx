@@ -3,12 +3,14 @@ import { useMenu } from '../context/MenuContext';
 import { useConfig } from '../context/ConfigContext';
 import { supabase } from '../supabase/client';
 import { THEMES } from '../data/themes';
-import { FaEye, FaEyeSlash, FaTrash, FaPlus, FaEdit, FaTimes, FaCheck } from 'react-icons/fa';
+import { QRCodeCanvas } from 'qrcode.react';
+import { jsPDF } from 'jspdf';
+import { FaEye, FaEyeSlash, FaTrash, FaPlus, FaEdit, FaTimes, FaCheck, FaUpload, FaDownload } from 'react-icons/fa';
 import styles from './AdminDashboard.module.css';
 
 const AdminDashboard = () => {
     const { menuItems, categories, toggleVisibility, updateDish, addDish, deleteDish, addCategory, updateCategory, deleteCategory, toggleCategoryVisibility } = useMenu();
-    const { config, updateConfig, updateColor } = useConfig();
+    const { config, updateConfig, updateColor, uploadLogo } = useConfig();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -17,7 +19,8 @@ const AdminDashboard = () => {
     // Auth State
     const [isRecovering, setIsRecovering] = useState(false); // Can "Forgot Password" mode
     const [recoveryEmail, setRecoveryEmail] = useState('');
-    const [showPasswordReset, setShowPasswordReset] = useState(false); // Show "New Password" inputs
+    const [showPasswordReset, setShowPasswordReset] = useState(false);
+    const [downloadFormat, setDownloadFormat] = useState('png'); // Show "New Password" inputs
     const [newPassword, setNewPassword] = useState('');
 
     // Form State
@@ -31,6 +34,9 @@ const AdminDashboard = () => {
     const [editingCategoryId, setEditingCategoryId] = useState(null);
     const [categoryForm, setCategoryForm] = useState({ name: '', image: '' });
     const [categoryImageFile, setCategoryImageFile] = useState(null);
+
+    const [logoFile, setLogoFile] = useState(null);
+    const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
     // Check for existing session or password recovery event
     useEffect(() => {
@@ -168,6 +174,84 @@ const AdminDashboard = () => {
         }
         setCategoryForm({ name: '', image: '' });
         setCategoryImageFile(null);
+    };
+
+    const handleLogoUpload = async () => {
+        if (!logoFile) return;
+        setIsUploadingLogo(true);
+        try {
+            await uploadLogo(logoFile);
+            alert('Logo actualizado con éxito');
+            setLogoFile(null);
+        } catch (error) {
+            alert('Error al actualizar logo: ' + error.message);
+        } finally {
+            setIsUploadingLogo(false);
+        }
+    };
+
+    const downloadQRCode = async () => {
+        const canvas = document.getElementById('menu-qr');
+        if (!canvas) return;
+
+        try {
+            if (downloadFormat === 'png') {
+                const pngUrl = canvas.toDataURL('image/png');
+                const downloadLink = document.createElement('a');
+                downloadLink.href = pngUrl;
+                downloadLink.download = 'menu-qr.png';
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+            } else {
+                const pdf = new jsPDF();
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const center = pageWidth / 2;
+
+                let yPos = 30;
+
+                // Try to add Logo
+                if (config.icon) {
+                    try {
+                        const img = new Image();
+                        img.crossOrigin = "Anonymous";
+                        img.src = config.icon;
+                        await new Promise((resolve, reject) => {
+                            img.onload = resolve;
+                            img.onerror = reject;
+                            // Timeout after 3s
+                            setTimeout(() => reject(new Error('Timeout')), 3000);
+                        });
+
+                        const imgWidth = 40;
+                        const imgHeight = (img.height * imgWidth) / img.width;
+                        pdf.addImage(img, 'PNG', center - (imgWidth / 2), yPos, imgWidth, imgHeight);
+                        yPos += imgHeight + 15;
+                    } catch (e) {
+                        console.error("Could not load logo for PDF", e);
+                    }
+                }
+
+                pdf.setFontSize(24);
+                pdf.text(config.restaurantName || 'Menú Digital', center, yPos, { align: 'center' });
+                yPos += 20;
+
+                const qrImage = canvas.toDataURL('image/png');
+                const qrSize = 100;
+                pdf.addImage(qrImage, 'PNG', center - (qrSize / 2), yPos, qrSize, qrSize);
+                yPos += qrSize + 15;
+
+                pdf.setFontSize(12);
+                pdf.setTextColor(100);
+                pdf.text('Escanea el código para ver nuestra carta', center, yPos, { align: 'center' });
+                pdf.text(window.location.origin, center, yPos + 7, { align: 'center' });
+
+                pdf.save('menu-qr.pdf');
+            }
+        } catch (error) {
+            console.error("Error downloading QR:", error);
+            alert("Error al descargar el archivo. Intente nuevamente.");
+        }
     };
 
     if (!isAuthenticated) {
@@ -400,12 +484,25 @@ const AdminDashboard = () => {
                                 />
                             </div>
                             <div className={styles.inputGroup}>
-                                <label>URL del Icono/Logo</label>
-                                <input
-                                    value={config.icon}
-                                    onChange={(e) => updateConfig('icon', e.target.value)}
-                                    className={styles.input}
-                                />
+                                <label>Logo / Icono</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                                    <div style={{ position: 'relative', width: '60px', height: '60px', borderRadius: '50%', overflow: 'hidden', border: '1px solid #ccc' }}>
+                                        <img src={config.icon || '/achabola.png'} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => setLogoFile(e.target.files[0])}
+                                            className={styles.input}
+                                        />
+                                        {logoFile && (
+                                            <button onClick={handleLogoUpload} disabled={isUploadingLogo} className={styles.submitBtn} style={{ padding: '0.5rem', fontSize: '0.8rem' }}>
+                                                {isUploadingLogo ? 'Subiendo...' : 'Actualizar Logo'}
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -445,11 +542,47 @@ const AdminDashboard = () => {
                             ))}
                         </div>
                     </div>
+
+                    <div className={styles.section} style={{ marginTop: '2rem' }}>
+                        <h4>Código QR del Menú</h4>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', padding: '20px', backgroundColor: 'white', borderRadius: '8px', width: 'fit-content', border: '1px solid #eee' }}>
+                            <QRCodeCanvas
+                                id="menu-qr"
+                                value={window.location.origin}
+                                size={200}
+                                level={"H"}
+                                includeMargin={true}
+                            />
+                            <p style={{ textAlign: 'center', color: '#666', fontSize: '0.9rem', maxWidth: '200px' }}>
+                                Escanea este código para acceder al menú.
+                            </p>
+
+                            <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                                <button
+                                    onClick={() => setDownloadFormat('png')}
+                                    className={`${styles.tab} ${downloadFormat === 'png' ? styles.activeTab : ''}`}
+                                    style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}
+                                >
+                                    PNG
+                                </button>
+                                <button
+                                    onClick={() => setDownloadFormat('pdf')}
+                                    className={`${styles.tab} ${downloadFormat === 'pdf' ? styles.activeTab : ''}`}
+                                    style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}
+                                >
+                                    PDF
+                                </button>
+                            </div>
+
+                            <button onClick={downloadQRCode} className={styles.button} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <FaDownload /> Descargar {downloadFormat.toUpperCase()}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
     );
-
 };
 
 export default AdminDashboard;

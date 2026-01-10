@@ -185,12 +185,15 @@ export const MenuProvider = ({ children }) => {
 
     // Category Actions
     const addCategory = async (name, imageFile) => {
-        const id = name.toLowerCase().replace(/\s+/g, '_');
+        // Generate slug from name
+        const slug = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
-        // Optimistically insert category first
-        const { error } = await supabase
+        // Optimistically insert category first (let DB generate ID)
+        const { data, error } = await supabase
             .from('categories')
-            .insert([{ id, name, image: '', isVisible: true }]);
+            .insert([{ name, slug, image: '', isVisible: true }])
+            .select()
+            .single();
 
         if (error) {
             console.error('Error adding category:', error);
@@ -198,17 +201,21 @@ export const MenuProvider = ({ children }) => {
             return;
         }
 
+        const newCategory = data;
+
         // Upload Image if present
         if (imageFile) {
             try {
-                const path = `${id}/${imageFile.name}`;
+                // Use a sanitized folder name based on the category name or ID
+                const folderName = name.toLowerCase().replace(/\s+/g, '_');
+                const path = `${folderName}/${imageFile.name}`;
                 const imageUrl = await uploadImage(imageFile, path, 'categories-images');
 
                 // Update with image URL
                 await supabase
                     .from('categories')
                     .update({ image: imageUrl })
-                    .eq('id', id);
+                    .eq('id', newCategory.id);
 
             } catch (uploadError) {
                 alert('Categoría creada, pero falló la subida de imagen: ' + uploadError.message);
