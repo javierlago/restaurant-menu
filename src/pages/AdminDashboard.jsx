@@ -7,6 +7,8 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { jsPDF } from 'jspdf';
 import { FaEye, FaEyeSlash, FaTrash, FaPlus, FaEdit, FaTimes, FaCheck, FaUpload, FaDownload, FaGripVertical } from 'react-icons/fa';
 import styles from './AdminDashboard.module.css';
+import FocalPointSelector from '../components/FocalPointSelector';
+import DishCard from '../components/DishCard';
 
 // DND Kit Imports
 import {
@@ -57,12 +59,12 @@ const AdminDashboard = () => {
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [editingDishId, setEditingDishId] = useState(null);
     const [dishForm, setDishForm] = useState({
-        name: '', category: 'entrantes', price: '', description: '', allergens: '', portionSize: '', image: ''
+        name: '', category_id: '', price: '', description: '', allergens: '', portionSize: '', image: '', image_position: 'center'
     });
     const [imageFile, setImageFile] = useState(null);
 
     const [editingCategoryId, setEditingCategoryId] = useState(null);
-    const [categoryForm, setCategoryForm] = useState({ name: '', image: '' });
+    const [categoryForm, setCategoryForm] = useState({ name: '', image: '', parent_id: '', image_position: 'center' });
     const [categoryImageFile, setCategoryImageFile] = useState(null);
 
     const [logoFile, setLogoFile] = useState(null);
@@ -149,7 +151,8 @@ const AdminDashboard = () => {
             description: dish.description,
             allergens: dish.allergens.join(', '),
             portionSize: dish.portionSize,
-            image: dish.image // Keep URL for display
+            image: dish.image, // Keep URL for display
+            image_position: dish.image_position || 'center'
         });
         setEditingDishId(dish.id);
         setImageFile(null); // Reset file input
@@ -176,7 +179,7 @@ const AdminDashboard = () => {
     };
 
     const resetForm = () => {
-        setDishForm({ name: '', category: categories[0]?.id || '', price: '', description: '', allergens: '', portionSize: '', image: '' });
+        setDishForm({ name: '', category_id: categories[0]?.id || '', price: '', description: '', allergens: '', portionSize: '', image: '', image_position: 'center' });
         setEditingDishId(null);
         setImageFile(null);
         setIsFormVisible(false);
@@ -184,7 +187,7 @@ const AdminDashboard = () => {
 
     // Category Actions
     const handleEditCategoryClick = (cat) => {
-        setCategoryForm({ name: cat.name, image: cat.image });
+        setCategoryForm({ name: cat.name, image: cat.image, parent_id: cat.parent_id || '', image_position: cat.image_position || 'center' });
         setEditingCategoryId(cat.id);
         setCategoryImageFile(null);
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -199,22 +202,24 @@ const AdminDashboard = () => {
             alert('Categoría actualizada');
             setEditingCategoryId(null);
         } else {
-            addCategory(categoryForm.name, categoryImageFile);
+            addCategory(categoryForm.name, categoryImageFile, categoryForm.parent_id || null, categoryForm.image_position);
             alert('Categoría añadida');
         }
-        setCategoryForm({ name: '', image: '' });
+        setCategoryForm({ name: '', image: '', parent_id: '', image_position: 'center' });
         setCategoryImageFile(null);
     };
 
     const handleDragEnd = (event) => {
         const { active, over } = event;
 
-        if (active.id !== over.id) {
+        if (over && active.id !== over.id) {
             const oldIndex = categories.findIndex((cat) => cat.id === active.id);
             const newIndex = categories.findIndex((cat) => cat.id === over.id);
 
-            const newOrder = arrayMove(categories, oldIndex, newIndex);
-            reorderCategories(newOrder);
+            if (oldIndex !== -1 && newIndex !== -1) {
+                const newOrder = arrayMove(categories, oldIndex, newIndex);
+                reorderCategories(newOrder);
+            }
         }
     };
 
@@ -391,9 +396,14 @@ const AdminDashboard = () => {
                                     <input placeholder="Ej. Paella Valenciana" value={dishForm.name} onChange={e => setDishForm({ ...dishForm, name: e.target.value })} className={styles.input} required />
                                 </div>
                                 <div className={styles.inputGroup}>
-                                    <label>Categoría</label>
-                                    <select value={dishForm.category} onChange={e => setDishForm({ ...dishForm, category: e.target.value })} className={styles.select}>
-                                        {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                                    <label>Categoría / Subcategoría</label>
+                                    <select value={dishForm.category_id} onChange={e => setDishForm({ ...dishForm, category_id: e.target.value })} className={styles.select}>
+                                        <option value="">-- Seleccionar --</option>
+                                        {categories.map(cat => (
+                                            <option key={cat.id} value={cat.id}>
+                                                {cat.parent_id ? `↳ ${cat.name}` : cat.name}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                                 <div className={styles.inputGroup}>
@@ -412,18 +422,24 @@ const AdminDashboard = () => {
                                         onChange={e => setImageFile(e.target.files[0])}
                                         className={styles.input}
                                     />
-                                    {dishForm.image && !imageFile && (
-                                        <div style={{ marginTop: '10px' }}>
-                                            <p style={{ fontSize: '0.8rem', marginBottom: '5px' }}>Imagen Actual:</p>
-                                            <img src={dishForm.image} alt="Preview" style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }} />
+                                </div>
+                                <div className={styles.inputGroup} style={{ gridColumn: '1 / -1' }}>
+                                    <label>Punto de Enfoque (Visual)</label>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 1fr) 280px', gap: '20px', alignItems: 'start' }}>
+                                        <div>
+                                            <FocalPointSelector
+                                                imageUrl={imageFile ? URL.createObjectURL(imageFile) : dishForm.image}
+                                                value={dishForm.image_position}
+                                                onChange={(pos) => setDishForm({ ...dishForm, image_position: pos })}
+                                            />
                                         </div>
-                                    )}
-                                    {imageFile && (
-                                        <div style={{ marginTop: '10px' }}>
-                                            <p style={{ fontSize: '0.8rem', marginBottom: '5px' }}>Nueva Imagen:</p>
-                                            <img src={URL.createObjectURL(imageFile)} alt="Preview" style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }} />
+                                        <div>
+                                            <p style={{ fontSize: '0.8rem', marginBottom: '10px', fontWeight: 'bold' }}>Vista previa de la Tarjeta:</p>
+                                            <div style={{ transform: 'scale(0.8)', transformOrigin: 'top left', width: '350px' }}>
+                                                <DishCard dish={{ ...dishForm, image: imageFile ? URL.createObjectURL(imageFile) : dishForm.image }} />
+                                            </div>
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
                                 <div className={styles.inputGroup}>
                                     <label>Alérgenos</label>
@@ -443,7 +459,9 @@ const AdminDashboard = () => {
                             <div key={item.id} className={`${styles.row} ${!item.isVisible ? styles.hiddenRow : ''}`}>
                                 <div className={styles.rowInfo}>
                                     <span className={styles.itemName}>{item.name}</span>
-                                    <span className={styles.itemCategory}>{categories.find(c => c.id === item.category)?.name || item.category}</span>
+                                    <span className={styles.itemCategory}>
+                                        {categories.find(c => String(c.id) === String(item.category_id))?.name || 'Sin categoría'}
+                                    </span>
                                 </div>
                                 <div className={styles.rowActions}>
                                     <span className={styles.priceTag}>{item.price}€</span>
@@ -459,29 +477,69 @@ const AdminDashboard = () => {
 
             {viewMode === 'categories' && (
                 <div className={styles.categoryPanel}>
-                    <form onSubmit={handleSaveCategory} className={styles.miniForm} style={{ alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                        <input placeholder="Nombre Categoría" value={categoryForm.name} onChange={e => setCategoryForm({ ...categoryForm, name: e.target.value })} className={styles.input} />
+                    <form onSubmit={handleSaveCategory} className={styles.formPanel}>
+                        <h3>{editingCategoryId ? 'Editar Categoría' : 'Nueva Categoría'}</h3>
+                        <div className={styles.formGrid}>
+                            <div className={styles.inputGroup}>
+                                <label>Nombre de la Categoría</label>
+                                <input placeholder="Nombre Categoría" value={categoryForm.name} onChange={e => setCategoryForm({ ...categoryForm, name: e.target.value })} className={styles.input} required />
+                            </div>
+                            <div className={styles.inputGroup}>
+                                <label>Categoría Padre (opcional)</label>
+                                <select
+                                    value={categoryForm.parent_id}
+                                    onChange={e => setCategoryForm({ ...categoryForm, parent_id: e.target.value })}
+                                    className={styles.select}
+                                >
+                                    <option value="">-- Sin categoría padre (Principal) --</option>
+                                    {(categories || []).filter(c => !c.parent_id && c.id !== editingCategoryId).map(cat => (
+                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                        <div className={styles.inputGroup} style={{ gridColumn: '1 / -1', marginTop: '10px' }}>
+                            <label>Imagen de Categoría</label>
                             <input
                                 type="file"
                                 accept="image/*"
                                 onChange={e => setCategoryImageFile(e.target.files[0])}
                                 className={styles.input}
                             />
-                            {/* Previews */}
-                            <div style={{ display: 'flex', gap: '10px' }}>
-                                {categoryForm.image && !categoryImageFile && (
-                                    <img src={categoryForm.image} alt="Current" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
-                                )}
-                                {categoryImageFile && (
-                                    <img src={URL.createObjectURL(categoryImageFile)} alt="New" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
-                                )}
+                        </div>
+
+                        <div className={styles.inputGroup} style={{ gridColumn: '1 / -1', marginTop: '20px' }}>
+                            <label>Punto de Enfoque y Vista Previa</label>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 1fr) 280px', gap: '20px', alignItems: 'start' }}>
+                                <div>
+                                    <FocalPointSelector
+                                        imageUrl={categoryImageFile ? URL.createObjectURL(categoryImageFile) : categoryForm.image}
+                                        value={categoryForm.image_position}
+                                        onChange={(pos) => setCategoryForm({ ...categoryForm, image_position: pos })}
+                                    />
+                                </div>
+                                <div>
+                                    <p style={{ fontSize: '0.8rem', marginBottom: '10px', fontWeight: 'bold' }}>Vista en Menú:</p>
+                                    <div className={styles.previewCatCard}>
+                                        <div className={styles.previewCatImageContainer}>
+                                            <img
+                                                src={categoryImageFile ? URL.createObjectURL(categoryImageFile) : categoryForm.image || '/placeholder.png'}
+                                                alt="Preview"
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: categoryForm.image_position }}
+                                            />
+                                            <div className={styles.previewCatOverlay} />
+                                        </div>
+                                        <div className={styles.previewCatContent}>
+                                            <h2 className={styles.previewCatName}>{categoryForm.name || 'Categoría'}</h2>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <button type="submit" className={styles.addButton} style={{ height: 'fit-content' }}>
-                            {editingCategoryId ? 'Actualizar' : <><FaPlus /> Añadir</>}
+                        <button type="submit" className={styles.submitBtn} style={{ marginTop: '20px' }}>
+                            {editingCategoryId ? 'Actualizar Categoría' : 'Añadir Categoría'}
                         </button>
                     </form>
                     <div className={styles.list}>
@@ -559,7 +617,7 @@ const AdminDashboard = () => {
 
                     <div className={styles.section} style={{ marginTop: '2rem' }}>
                         <h4>Tema de Color</h4>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '15px' }}>
+                        <div style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', display: 'grid', gap: '15px' }}>
                             {THEMES.map(theme => (
                                 <button
                                     key={theme.id}

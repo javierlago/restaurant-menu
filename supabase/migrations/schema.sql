@@ -3,22 +3,24 @@
 
 -- 1. Categories Table
 CREATE TABLE IF NOT EXISTS public.categories (
-    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     slug TEXT NOT NULL UNIQUE,
     image TEXT,
     "isVisible" BOOLEAN DEFAULT true,
     category_order INTEGER DEFAULT 0,
+    parent_id UUID REFERENCES public.categories(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
 -- 2. Dishes Table
 CREATE TABLE IF NOT EXISTS public.dishes (
-    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     description TEXT,
     price NUMERIC(10, 2) NOT NULL,
-    category TEXT, -- Reference to categories.name or categories.slug
+    category TEXT, -- Legacy column
+    category_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,
     image TEXT,
     "isVisible" BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())

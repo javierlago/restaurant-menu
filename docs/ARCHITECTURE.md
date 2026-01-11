@@ -37,9 +37,10 @@ The application uses **React Context API** to manage global state without "prop 
 ### Context Providers
 
 1.  **MenuContext**: 
-    - Fetches dishes and categories from Supabase.
+    - Fetches dishes and categories (including hierarchical subcategories) from Supabase.
     - Provides CRUD operations (Add, Edit, Delete, Toggle Visibility).
     - Handles image uploads to Supabase Storage.
+    - Manages manual ordering and parent-child relationships between categories.
     - Uses Realtime subscriptions to keep the menu updated across all clients.
 
 2.  **ConfigContext**:

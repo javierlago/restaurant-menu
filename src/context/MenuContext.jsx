@@ -114,7 +114,13 @@ export const MenuProvider = ({ children }) => {
 
         const { error } = await supabase
             .from('dishes')
-            .update({ ...updatedFields, image: imageUrl })
+            .update({
+                ...updatedFields,
+                category_id: updatedFields.category_id || null,
+                category: updatedFields.category_id || '', // Legacy sync
+                image: imageUrl,
+                image_position: updatedFields.image_position || 'center'
+            })
             .eq('id', id);
 
         if (error) {
@@ -135,10 +141,16 @@ export const MenuProvider = ({ children }) => {
 
         const { id: ignoredId, ...dishData } = newDish;
 
-        // Insert without image first (or with placeholder if required)
+        // Insert without image first
         const { data, error } = await supabase
             .from('dishes')
-            .insert([{ ...dishData, isVisible: true }])
+            .insert([{
+                ...dishData,
+                category_id: dishData.category_id || null,
+                category: dishData.category_id || '', // Legacy sync
+                isVisible: true,
+                image_position: dishData.image_position || 'center'
+            }])
             .select()
             .single();
 
@@ -184,14 +196,14 @@ export const MenuProvider = ({ children }) => {
     };
 
     // Category Actions
-    const addCategory = async (name, imageFile) => {
+    const addCategory = async (name, imageFile, parentId = null, imagePosition = 'center') => {
         // Generate slug from name
         const slug = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
         // Optimistically insert category first (let DB generate ID)
         const { data, error } = await supabase
             .from('categories')
-            .insert([{ name, slug, image: '', isVisible: true }])
+            .insert([{ name, slug, image: '', isVisible: true, parent_id: parentId, image_position: imagePosition }])
             .select()
             .single();
 
@@ -239,7 +251,12 @@ export const MenuProvider = ({ children }) => {
 
         const { error } = await supabase
             .from('categories')
-            .update({ ...updatedFields, image: imageUrl })
+            .update({
+                ...updatedFields,
+                parent_id: updatedFields.parent_id || null,
+                image: imageUrl,
+                image_position: updatedFields.image_position || 'center'
+            })
             .eq('id', id);
 
         if (error) {

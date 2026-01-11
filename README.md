@@ -12,15 +12,17 @@ A modern and elegant Progressive Web App (PWA) designed for dynamic visualizatio
 ## ✨ Features
 
 ### 📱 For the Customer
-- **Interactive Menu**: Smooth dish visualization organized by categories.
+- **Hierarchical Categories**: Support for nested subcategories with intuitive breadcrumb-style navigation.
+- **Interactive Menu**: Smooth dish visualization with responsive grids and smart image alignment.
 - **Dark/Light Mode**: Full support for user theme preferences.
 - **Dish Details**: Information on prices, descriptions, and allergens.
 - **PWA Experience**: Can be installed on the mobile home screen like a native app.
 
 ### 🔐 Admin Dashboard
-- **Content Management (CRUD)**: Easily add, edit, and delete dishes and categories.
+- **Hierarchical Content Management**: Create parent-child relationships between categories and assign dishes at any level.
+- **Image Focal Point Selector**: Custom touch-friendly interface to precisely set image alignment (`object-position`) with real-time previews.
 - **Visibility Control**: Hide/show dishes or entire categories based on availability.
-- **Image Uploads**: Integration with Supabase Storage to manage dish photos.
+- **Image Uploads**: Integration with Supabase Storage to manage dish and category photos.
 - **QR Generator**: Dynamic QR code creation for tables with download options:
   - **PNG**: QR code only.
   - **PDF**: Ready-to-print design including the restaurant logo.

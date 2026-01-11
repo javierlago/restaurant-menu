@@ -14,11 +14,16 @@ const Home = () => {
             <p className={styles.subtitle}>{config.subtitle || 'Descubre una experiencia gastronómica única'}</p>
 
             <div className={styles.grid}>
-                {categories.filter(cat => cat.isVisible !== false).map((cat) => (
+                {categories.filter(cat => cat.isVisible !== false && !cat.parent_id).map((cat) => (
                     <Link to={`/category/${cat.id}`} key={cat.id} className={styles.card}>
                         <div className={styles.imageContainer}>
                             {cat.image ? (
-                                <img src={cat.image} alt={cat.name} className={styles.image} />
+                                <img
+                                    src={cat.image}
+                                    alt={cat.name}
+                                    className={styles.image}
+                                    style={{ objectPosition: cat.image_position || 'center' }}
+                                />
                             ) : (
                                 <ImagePlaceholder type="category" className={styles.image} />
                             )}

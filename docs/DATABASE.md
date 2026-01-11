@@ -9,11 +9,12 @@ Stores individual menu items.
 
 | Column      | Type        | Description                               |
 | ----------- | ----------- | ----------------------------------------- |
-| `id`        | `bigint`    | Primary Key (Identity)                    |
+| `id`        | `uuid`      | Primary Key (Identity)                    |
 | `name`      | `text`      | Name of the dish                          |
 | `description` | `text`    | Detailed description                      |
 | `price`     | `numeric`   | Price of the dish                         |
-| `category`  | `text`      | Reference to category slug/name           |
+| `category`  | `text`      | Legacy reference (text)                   |
+| `category_id` | `uuid`    | Reference to `categories.id`              |
 | `image`     | `text`      | Public URL of the hosted image            |
 | `isVisible` | `boolean`   | Toggle to hide/show from public view      |
 | `created_at`| `timestamp` | Auto-generated timestamp                  |
@@ -23,11 +24,13 @@ Stores menu categories for organization.
 
 | Column      | Type        | Description                               |
 | ----------- | ----------- | ----------------------------------------- |
-| `id`        | `bigint`    | Primary Key (Identity)                    |
+| `id`        | `uuid`      | Primary Key (Identity)                    |
 | `name`      | `text`      | Name of the category                      |
 | `slug`      | `text`      | URL-friendly identifier                   |
 | `image`     | `text`      | Icon/Header image for the category        |
 | `isVisible` | `boolean`   | Toggle to hide/show category              |
+| `category_order` | `integer` | Display order                        |
+| `parent_id` | `uuid`      | Reference to parent `categories.id`       |
 
 ### 3. `restaurant_config`
 Global settings for the restaurant's brand identity.

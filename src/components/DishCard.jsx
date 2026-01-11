@@ -6,11 +6,19 @@ const DishCard = ({ dish }) => {
         <div className={styles.card}>
             <div className={styles.imageContainer}>
                 {dish.image ? (
-                    <img src={dish.image} alt={dish.name} className={styles.image} loading="lazy" />
+                    <img
+                        src={dish.image}
+                        alt={dish.name}
+                        className={styles.image}
+                        loading="lazy"
+                        style={{ objectPosition: dish.image_position || 'center' }}
+                    />
                 ) : (
                     <ImagePlaceholder type="dish" className={styles.image} />
                 )}
-                <span className={styles.price}>{dish.price.toFixed(2)}€</span>
+                <span className={styles.price}>
+                    {typeof dish.price === 'number' ? dish.price.toFixed(2) : parseFloat(dish.price || 0).toFixed(2)}€
+                </span>
             </div>
 
             <div className={styles.content}>

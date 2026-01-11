@@ -10,9 +10,11 @@ const CategoryView = () => {
 
     if (loading) return <div className={styles.container}>Cargando...</div>;
 
+    // Filter categories to find subcategories of the current one
+    const subcategories = categories.filter(cat => String(cat.parent_id) === String(id) && cat.isVisible !== false);
+
     // Filter dishes by category and visibility
-    // Ensure accurate type matching for comparison (Supabase IDs might be numbers or strings)
-    const dishes = menuItems.filter(dish => String(dish.category) === String(id) && dish.isVisible);
+    const dishes = menuItems.filter(dish => String(dish.category_id) === String(id) && dish.isVisible);
 
     // Find category to get real name
     const categoryObj = categories.find(c => String(c.id) === String(id));
@@ -21,14 +23,43 @@ const CategoryView = () => {
     return (
         <div className={styles.container}>
             <div className={styles.header}>
-                <Link to="/" className={styles.backButton}>
+                <Link to={categoryObj?.parent_id ? `/category/${categoryObj.parent_id}` : "/"} className={styles.backButton}>
                     <FaArrowLeft /> Volver
                 </Link>
                 <h1 className={styles.title}>{title}</h1>
             </div>
 
-            {dishes.length === 0 ? (
-                <p className={styles.empty}>No hay platos disponibles en esta categoría.</p>
+            {/* Subcategories Grid */}
+            {subcategories.length > 0 && (
+                <div className={styles.subcategoryGrid}>
+                    {subcategories.map((sub) => (
+                        <Link to={`/category/${sub.id}`} key={sub.id} className={styles.subcategoryCard}>
+                            <div className={styles.subcategoryImageContainer}>
+                                {sub.image ? (
+                                    <img
+                                        src={sub.image}
+                                        alt={sub.name}
+                                        className={styles.subcategoryImage}
+                                        style={{ objectPosition: sub.image_position || 'center' }}
+                                    />
+                                ) : (
+                                    <div className={styles.subcategoryIconPlaceholder}>
+                                        <div style={{ padding: '20px', opacity: 0.5 }}>Categoría</div>
+                                    </div>
+                                )}
+                                <div className={styles.subcategoryOverlay} />
+                            </div>
+                            <div className={styles.subcategoryContent}>
+                                <h2 className={styles.subcategoryName}>{sub.name}</h2>
+                            </div>
+                        </Link>
+                    ))}
+                </div>
+            )}
+
+            {/* Dishes Grid */}
+            {dishes.length === 0 && subcategories.length === 0 ? (
+                <p className={styles.empty}>No hay platos ni subcategorías disponibles.</p>
             ) : (
                 <div className={styles.grid}>
                     {dishes.map(dish => (
