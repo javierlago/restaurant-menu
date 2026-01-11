@@ -177,9 +177,38 @@
     background-color: var(--color-surface-hover);
 }
 
-.rowInfo {
+.rowInfo,
+.categoryInfo {
     display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.rowInfo {
     flex-direction: column;
+    align-items: flex-start;
+}
+
+.dragHandle {
+    background: none;
+    border: none;
+    color: var(--color-text-muted);
+    cursor: grab;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    font-size: 1.1rem;
+    touch-action: none;
+}
+
+.dragHandle:active {
+    cursor: grabbing;
+}
+
+.dragging {
+    box-shadow: var(--shadow-xl);
+    background-color: var(--color-surface-hover);
+    z-index: 100;
 }
 
 .itemName {

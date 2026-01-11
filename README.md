@@ -87,12 +87,20 @@ A modern and elegant Progressive Web App (PWA) designed for dynamic visualizatio
 
 ## 🛠️ Deployment
 
-The project is optimized for deployment on platforms like **Vercel**, **Netlify**, or **GitHub Pages**.
+### Deploy to Vercel (Recommended)
 
-```bash
-npm run build
-```
-Upload the resulting `dist` folder to your favorite hosting service.
+1. **Push your code**: Ensure all your changes (including the new `vercel.json`) are on GitHub.
+2. **Connect Repo**: Login to [Vercel](https://vercel.com/), click **"Add New" > "Project"**, and import your repository.
+3. **Configure Environment Variables**: In the Vercel dashboard, go to the **Settings > Environment Variables** of your project and add:
+   - `VITE_SUPABASE_URL`: (Copy from your local `.env`)
+   - `VITE_SUPABASE_ANON_KEY`: (Copy from your local `.env`)
+4. **Deploy**: Click the "Deploy" button. Vercel will automatically detect Vite and build the project.
+
+> [!TIP]
+> This project includes a `vercel.json` file which ensures that routes like `/admin` work correctly when the page is refreshed (SPA routing).
+
+### Other Platforms
+You can also use **Netlify** (requires a `_redirects` file) or **GitHub Pages** (requires extra configuration for routing).
 
 ---
 

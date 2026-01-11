@@ -22,7 +22,7 @@ export const MenuProvider = ({ children }) => {
             const { data: categoriesData, error: categoriesError } = await supabase
                 .from('categories')
                 .select('*')
-                .order('name');
+                .order('category_order', { ascending: true });
 
             if (dishesError) throw dishesError;
             if (categoriesError) throw categoriesError;
@@ -280,11 +280,39 @@ export const MenuProvider = ({ children }) => {
         }
     };
 
+    const reorderCategories = async (newCategories) => {
+        // Optimistic update
+        setCategories(newCategories);
+
+        try {
+            // Update each category order in Supabase
+            // Note: In a production app with many items, a RPC call would be more efficient
+            const updates = newCategories.map((cat, index) =>
+                supabase
+                    .from('categories')
+                    .update({ category_order: index })
+                    .eq('id', cat.id)
+            );
+
+            const results = await Promise.all(updates);
+            const errors = results.filter(r => r.error).map(r => r.error);
+
+            if (errors.length > 0) {
+                console.error('Some errors occurred while reordering:', errors);
+                fetchData(); // Rollback to server state
+            }
+        } catch (err) {
+            console.error('Error reordering categories:', err);
+            fetchData(); // Rollback
+        }
+    };
+
     return (
         <MenuContext.Provider value={{
             menuItems, categories, loading,
             toggleVisibility, updateDish, addDish, deleteDish,
-            addCategory, updateCategory, deleteCategory, toggleCategoryVisibility
+            addCategory, updateCategory, deleteCategory, toggleCategoryVisibility,
+            reorderCategories
         }}>
             {children}
         </MenuContext.Provider>

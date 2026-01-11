@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS public.categories (
     slug TEXT NOT NULL UNIQUE,
     image TEXT,
     "isVisible" BOOLEAN DEFAULT true,
+    category_order INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 

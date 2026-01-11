@@ -5,16 +5,46 @@ import { supabase } from '../supabase/client';
 import { THEMES } from '../data/themes';
 import { QRCodeCanvas } from 'qrcode.react';
 import { jsPDF } from 'jspdf';
-import { FaEye, FaEyeSlash, FaTrash, FaPlus, FaEdit, FaTimes, FaCheck, FaUpload, FaDownload } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaTrash, FaPlus, FaEdit, FaTimes, FaCheck, FaUpload, FaDownload, FaGripVertical } from 'react-icons/fa';
 import styles from './AdminDashboard.module.css';
 
+// DND Kit Imports
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+    useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
 const AdminDashboard = () => {
-    const { menuItems, categories, toggleVisibility, updateDish, addDish, deleteDish, addCategory, updateCategory, deleteCategory, toggleCategoryVisibility } = useMenu();
+    const { menuItems, categories, toggleVisibility, updateDish, addDish, deleteDish, addCategory, updateCategory, deleteCategory, toggleCategoryVisibility, reorderCategories } = useMenu();
     const { config, updateConfig, updateColor, uploadLogo } = useConfig();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [viewMode, setViewMode] = useState('dishes'); // 'dishes' | 'categories' | 'branding'
+
+    // DND Sensors
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8, // Require 8px drag before activating to allow clicks
+            }
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
 
     // Auth State
     const [isRecovering, setIsRecovering] = useState(false); // Can "Forgot Password" mode
@@ -174,6 +204,18 @@ const AdminDashboard = () => {
         }
         setCategoryForm({ name: '', image: '' });
         setCategoryImageFile(null);
+    };
+
+    const handleDragEnd = (event) => {
+        const { active, over } = event;
+
+        if (active.id !== over.id) {
+            const oldIndex = categories.findIndex((cat) => cat.id === active.id);
+            const newIndex = categories.findIndex((cat) => cat.id === over.id);
+
+            const newOrder = arrayMove(categories, oldIndex, newIndex);
+            reorderCategories(newOrder);
+        }
     };
 
     const handleLogoUpload = async () => {
@@ -443,18 +485,26 @@ const AdminDashboard = () => {
                         </button>
                     </form>
                     <div className={styles.list}>
-                        {categories.map(cat => (
-                            <div key={cat.id} className={styles.row}>
-                                <span className={styles.itemName}>{cat.name}</span>
-                                <div className={styles.rowActions}>
-                                    <button onClick={() => handleEditCategoryClick(cat)} className={styles.btnEdit}><FaEdit /></button>
-                                    <button onClick={() => toggleCategoryVisibility(cat.id)} className={styles.btnIcon} title={cat.isVisible !== false ? "Ocultar" : "Mostrar"}>
-                                        {cat.isVisible !== false ? <FaEye /> : <FaEyeSlash />}
-                                    </button>
-                                    <button onClick={() => deleteCategory(cat.id)} className={styles.btnDelete}><FaTrash /></button>
-                                </div>
-                            </div>
-                        ))}
+                        <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleDragEnd}
+                        >
+                            <SortableContext
+                                items={categories.map(c => c.id)}
+                                strategy={verticalListSortingStrategy}
+                            >
+                                {categories.map(cat => (
+                                    <SortableItem
+                                        key={cat.id}
+                                        cat={cat}
+                                        handleEditCategoryClick={handleEditCategoryClick}
+                                        toggleCategoryVisibility={toggleCategoryVisibility}
+                                        deleteCategory={deleteCategory}
+                                    />
+                                ))}
+                            </SortableContext>
+                        </DndContext>
                     </div>
                 </div>
             )}
@@ -581,6 +631,47 @@ const AdminDashboard = () => {
                     </div>
                 </div>
             )}
+        </div>
+    );
+};
+
+const SortableItem = ({ cat, handleEditCategoryClick, toggleCategoryVisibility, deleteCategory }) => {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging
+    } = useSortable({ id: cat.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 1 : 'auto',
+    };
+
+    return (
+        <div ref={setNodeRef} style={style} className={`${styles.row} ${isDragging ? styles.dragging : ''}`}>
+            <div className={styles.categoryInfo}>
+                <button
+                    className={styles.dragHandle}
+                    {...attributes}
+                    {...listeners}
+                    title="Arrastrar para reordenar"
+                >
+                    <FaGripVertical />
+                </button>
+                <span className={styles.itemName}>{cat.name}</span>
+            </div>
+            <div className={styles.rowActions}>
+                <button onClick={() => handleEditCategoryClick(cat)} className={styles.btnEdit}><FaEdit /></button>
+                <button onClick={() => toggleCategoryVisibility(cat.id)} className={styles.btnIcon} title={cat.isVisible !== false ? "Ocultar" : "Mostrar"}>
+                    {cat.isVisible !== false ? <FaEye /> : <FaEyeSlash />}
+                </button>
+                <button onClick={() => deleteCategory(cat.id)} className={styles.btnDelete}><FaTrash /></button>
+            </div>
         </div>
     );
 };
