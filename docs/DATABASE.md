@@ -13,9 +13,12 @@ Stores individual menu items.
 | `name`      | `text`      | Name of the dish                          |
 | `description` | `text`    | Detailed description                      |
 | `price`     | `numeric`   | Price of the dish                         |
+| `portionSize` | `text`     | Portion details (e.g., "500g", "2 pers") |
+| `allergens`  | `text[]`   | Array of allergens                        |
 | `category`  | `text`      | Legacy reference (text)                   |
 | `category_id` | `uuid`    | Reference to `categories.id`              |
 | `image`     | `text`      | Public URL of the hosted image            |
+| `image_position` | `text` | Object-position (e.g., "50% 50%")        |
 | `isVisible` | `boolean`   | Toggle to hide/show from public view      |
 | `created_at`| `timestamp` | Auto-generated timestamp                  |
 
@@ -28,6 +31,7 @@ Stores menu categories for organization.
 | `name`      | `text`      | Name of the category                      |
 | `slug`      | `text`      | URL-friendly identifier                   |
 | `image`     | `text`      | Icon/Header image for the category        |
+| `image_position` | `text` | Object-position (e.g., "50% 50%")        |
 | `isVisible` | `boolean`   | Toggle to hide/show category              |
 | `category_order` | `integer` | Display order                        |
 | `parent_id` | `uuid`      | Reference to parent `categories.id`       |
@@ -43,6 +47,17 @@ Global settings for the restaurant's brand identity.
 | `icon`            | `text`      | Logo URL (also used as Favicon)              |
 | `theme_id`        | `text`      | Reference to the selected theme ID           |
 | `show_name`       | `boolean`   | Toggle to show/hide name next to logo        |
+
+---
+
+## Migration & Setup Scripts
+
+The scripts in `supabase/migrations/` are organized to facilitate both incremental updates and fresh setups:
+
+- **`000_full_setup.sql`**: Recommended for **new projects**. A single script that creates all tables, buckets, and policies in one step.
+- **`001_` to `007_`**: Chronological scripts reflecting the evolution of the database. Useful for auditing or partially updating an older version of the schema.
+
+---
 
 ## Security (RLS)
 
