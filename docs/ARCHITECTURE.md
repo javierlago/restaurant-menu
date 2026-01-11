@@ -1,6 +1,6 @@
-# Architecture Documentation - A Chabola
+# Architecture Documentation - Restaurant Digital Menu
 
-This document outlines the technical architecture, folder structure, and data flow of the **A Chabola** Digital Menu project.
+This document outlines the technical architecture, folder structure, and data flow of the Restaurant Digital Menu project.
 
 ## Technical Stack
 

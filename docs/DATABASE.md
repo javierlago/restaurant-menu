@@ -1,4 +1,4 @@
-# Database Documentation - A Chabola
+# Database Documentation - Restaurant Digital Menu
 
 This document describes the Supabase/PostgreSQL schema, table structures, and security policies used in the project.
 

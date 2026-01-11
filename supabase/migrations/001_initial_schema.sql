@@ -29,8 +29,8 @@ CREATE TABLE IF NOT EXISTS public.dishes (
 -- 3. Restaurant Configuration Table
 CREATE TABLE IF NOT EXISTS public.restaurant_config (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    restaurant_name TEXT NOT NULL DEFAULT 'A Chabola',
-    subtitle TEXT DEFAULT 'Descubre una experiencia gastronómica única en A Chabola',
+    restaurant_name TEXT NOT NULL DEFAULT 'Restaurant Name',
+    subtitle TEXT DEFAULT 'Discover our delicious menu and unique flavors',
     icon TEXT,
     theme_id TEXT DEFAULT 'classic',
     show_name BOOLEAN DEFAULT true,

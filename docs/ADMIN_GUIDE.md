@@ -1,4 +1,4 @@
-# Administrator Guide - A Chabola
+# Administrator Guide - Restaurant Digital Menu
 
 This guide explains how to use the admin panel to manage your restaurant's digital menu.
 

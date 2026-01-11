@@ -7,11 +7,11 @@ const ConfigContext = createContext();
 export const useConfig = () => useContext(ConfigContext);
 
 const DEFAULT_CONFIG = {
-    restaurantName: 'A Chabola',
+    restaurantName: 'Restaurant Name',
     showName: true,
-    icon: '/achabola.png',
+    icon: '/restaurant-logo.png',
     themeId: 'classic',
-    subtitle: 'Descubre una experiencia gastronómica única en A Chabola'
+    subtitle: 'Discover our delicious menu and unique flavors'
 };
 
 export const ConfigProvider = ({ children }) => {
@@ -32,9 +32,9 @@ export const ConfigProvider = ({ children }) => {
                 setConfig({
                     restaurantName: data.restaurant_name,
                     showName: data.show_name,
-                    icon: data.icon || '/achabola.png',
+                    icon: data.icon || '/restaurant-logo.png',
                     themeId: data.theme_id || 'classic',
-                    subtitle: data.subtitle || 'Descubre una experiencia gastronómica única en A Chabola'
+                    subtitle: data.subtitle || 'Discover our delicious menu and unique flavors'
                 });
                 setConfigId(data.id);
             } else if (error && error.code !== 'PGRST116') {

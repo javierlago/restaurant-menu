@@ -1,11 +1,11 @@
-# 🍽️ Digital Menu - A Chabola
+# 🍽️ Smart Digital Menu - Open Source Ready
 
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Supabase](https://img.shields.io/badge/Supabase-2-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A modern and elegant Progressive Web App (PWA) designed for dynamic visualization and management of the **A Chabola** restaurant menu. It allows customers to access the menu via QR codes and enables owners to manage all content in real-time.
+A modern and elegant Progressive Web App (PWA) designed for dynamic visualization and management of restaurant menus. It allows customers to access the menu via QR codes and enables owners to manage all content in real-time.
 
 ---
 
@@ -120,4 +120,4 @@ For more detailed technical information, please refer to:
 - [🔐 Administrator Guide](docs/ADMIN_GUIDE.md): How to manage the menu and branding.
 
 ---
-*Developed for A Chabola with ❤️*
+*Developed with ❤️ as a modular restaurant solution*

@@ -1,7 +1,7 @@
 {
-    "name": "A Chabola Carta Digital",
-    "short_name": "A Chabola",
-    "description": "Carta digital interactiva para restaurante A Chabola.",
+    "name": "Restaurant Digital Menu",
+    "short_name": "Menu",
+    "description": "Interactive digital menu for your restaurant.",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#121212",
