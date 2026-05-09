@@ -1,3 +1,6 @@
+# Database restore scripts (contain data, not for version control)
+supabase/restore_data.sql
+
 # Environment variables
 .env
 .env.local

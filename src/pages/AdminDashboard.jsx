@@ -72,17 +72,21 @@ const AdminDashboard = () => {
 
     // Check for existing session or password recovery event
     useEffect(() => {
+        // Check if arriving from an invitation link (hash contains type=invite)
+        const hashParams = new URLSearchParams(window.location.hash.replace('#', '?'));
+        const isInviteLink = hashParams.get('type') === 'invite';
+
         supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session) setIsAuthenticated(true);
+            if (session && !isInviteLink) setIsAuthenticated(true);
         });
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            if (event === 'SIGNED_IN') {
+            if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && isInviteLink)) {
+                setShowPasswordReset(true);
+            } else if (event === 'SIGNED_IN') {
                 setIsAuthenticated(true);
             } else if (event === 'SIGNED_OUT') {
                 setIsAuthenticated(false);
-            } else if (event === 'PASSWORD_RECOVERY') {
-                setShowPasswordReset(true);
             }
         });
 
@@ -129,9 +133,10 @@ const AdminDashboard = () => {
                 password: newPassword
             });
             if (error) throw error;
-            alert('Contraseña actualizada con éxito');
+            alert('Contraseña actualizada con éxito. Ya puedes acceder al panel.');
             setShowPasswordReset(false);
             setNewPassword('');
+            setIsAuthenticated(true);
         } catch (error) {
             alert('Error al actualizar contraseña: ' + error.message);
         }
