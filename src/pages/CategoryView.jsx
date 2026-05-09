@@ -10,15 +10,18 @@ const CategoryView = () => {
 
     if (loading) return <div className={styles.container}>Cargando...</div>;
 
+    const categoryObj = categories.find(c => String(c.id) === String(id));
+
+    if (!categoryObj || categoryObj.isVisible === false) {
+        return <div className={styles.container}>Categoría no disponible.</div>;
+    }
+
     // Filter categories to find subcategories of the current one
     const subcategories = categories.filter(cat => String(cat.parent_id) === String(id) && cat.isVisible !== false);
 
     // Filter dishes by category and visibility
     const dishes = menuItems.filter(dish => String(dish.category_id) === String(id) && dish.isVisible);
-
-    // Find category to get real name
-    const categoryObj = categories.find(c => String(c.id) === String(id));
-    const title = categoryObj ? categoryObj.name : (id ? id.replace(/_/g, ' ').toUpperCase() : '');
+    const title = categoryObj.name;
 
     return (
         <div className={styles.container}>

@@ -115,8 +115,9 @@ const AdminDashboard = () => {
     const handleForgotPassword = async (e) => {
         e.preventDefault();
         try {
+            const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
             const { data, error } = await supabase.auth.resetPasswordForEmail(recoveryEmail, {
-                redirectTo: window.location.origin + '/admin',
+                redirectTo: `${appUrl}/admin`,
             });
             if (error) throw error;
             alert('Correo de recuperación enviado. Revisa tu bandeja de entrada.');
@@ -126,16 +127,25 @@ const AdminDashboard = () => {
         }
     };
 
+    const [confirmPassword, setConfirmPassword] = useState('');
+
     const handleUpdatePassword = async (e) => {
         e.preventDefault();
+        if (newPassword.length < 12) {
+            alert('La contraseña debe tener al menos 12 caracteres');
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            alert('Las contraseñas no coinciden');
+            return;
+        }
         try {
-            const { data, error } = await supabase.auth.updateUser({
-                password: newPassword
-            });
+            const { error } = await supabase.auth.updateUser({ password: newPassword });
             if (error) throw error;
             alert('Contraseña actualizada con éxito. Ya puedes acceder al panel.');
             setShowPasswordReset(false);
             setNewPassword('');
+            setConfirmPassword('');
             setIsAuthenticated(true);
         } catch (error) {
             alert('Error al actualizar contraseña: ' + error.message);
@@ -167,9 +177,14 @@ const AdminDashboard = () => {
 
     const handleSaveDish = (e) => {
         e.preventDefault();
+        const price = parseFloat(dishForm.price);
+        if (isNaN(price) || price < 0 || price > 9999.99) {
+            alert('El precio debe ser un número válido entre 0 y 9999.99');
+            return;
+        }
         const formattedDish = {
             ...dishForm,
-            price: parseFloat(dishForm.price),
+            price,
             allergens: dishForm.allergens.split(',').map(s => s.trim()).filter(Boolean)
         };
 
@@ -363,10 +378,19 @@ const AdminDashboard = () => {
                         type="password"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        placeholder="Nueva Contraseña"
+                        placeholder="Nueva contraseña (mínimo 12 caracteres)"
                         className={styles.input}
                         required
-                        minLength={6}
+                        minLength={12}
+                    />
+                    <input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Confirmar contraseña"
+                        className={styles.input}
+                        required
+                        minLength={12}
                     />
                     <button type="submit" className={styles.button}>Actualizar Contraseña</button>
                 </form>
@@ -472,7 +496,7 @@ const AdminDashboard = () => {
                                     <span className={styles.priceTag}>{item.price}€</span>
                                     <button onClick={() => handleEditClick(item)} className={styles.btnEdit} title="Editar"><FaEdit /></button>
                                     <button onClick={() => toggleVisibility(item.id)} className={styles.btnIcon} title="Ocultar">{item.isVisible ? <FaEye /> : <FaEyeSlash />}</button>
-                                    <button onClick={() => deleteDish(item.id)} className={styles.btnDelete} title="Eliminar"><FaTrash /></button>
+                                    <button onClick={() => { if (window.confirm(`¿Eliminar el plato "${item.name}"? Esta acción no se puede deshacer.`)) deleteDish(item.id); }} className={styles.btnDelete} title="Eliminar"><FaTrash /></button>
                                 </div>
                             </div>
                         ))}
@@ -733,7 +757,7 @@ const SortableItem = ({ cat, handleEditCategoryClick, toggleCategoryVisibility, 
                 <button onClick={() => toggleCategoryVisibility(cat.id)} className={styles.btnIcon} title={cat.isVisible !== false ? "Ocultar" : "Mostrar"}>
                     {cat.isVisible !== false ? <FaEye /> : <FaEyeSlash />}
                 </button>
-                <button onClick={() => deleteCategory(cat.id)} className={styles.btnDelete}><FaTrash /></button>
+                <button onClick={() => { if (window.confirm(`¿Eliminar la categoría "${cat.name}"? Esta acción no se puede deshacer.`)) deleteCategory(cat.id); }} className={styles.btnDelete}><FaTrash /></button>
             </div>
         </div>
     );

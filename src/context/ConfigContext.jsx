@@ -79,26 +79,29 @@ export const ConfigProvider = ({ children }) => {
             document.head.appendChild(styleEl);
         }
 
+        const safeColor = (value) => /^#[0-9A-Fa-f]{3,8}$/.test(value) ? value : '#000000';
+        const l = theme.colors.light;
+        const d = theme.colors.dark;
         const css = `
             :root, :root[data-theme="light"] {
-                --color-primary: ${theme.colors.light.primary};
-                --color-background: ${theme.colors.light.background};
-                --color-surface: ${theme.colors.light.surface};
-                --color-text: ${theme.colors.light.text};
-                --color-brand-brown: ${theme.colors.light.primary}; 
-                --color-brand-cream: ${theme.colors.light.background};
-                --color-text-muted: ${theme.colors.light.secondary};
-                --color-secondary: ${theme.colors.light.secondary};
+                --color-primary: ${safeColor(l.primary)};
+                --color-background: ${safeColor(l.background)};
+                --color-surface: ${safeColor(l.surface)};
+                --color-text: ${safeColor(l.text)};
+                --color-brand-brown: ${safeColor(l.primary)};
+                --color-brand-cream: ${safeColor(l.background)};
+                --color-text-muted: ${safeColor(l.secondary)};
+                --color-secondary: ${safeColor(l.secondary)};
             }
             :root[data-theme="dark"] {
-                 --color-primary: ${theme.colors.dark.primary};
-                --color-background: ${theme.colors.dark.background};
-                --color-surface: ${theme.colors.dark.surface};
-                --color-text: ${theme.colors.dark.text};
-                --color-brand-brown: ${theme.colors.dark.primary}; 
-                --color-brand-cream: ${theme.colors.dark.background};
-                --color-text-muted: ${theme.colors.dark.secondary};
-                --color-secondary: ${theme.colors.dark.secondary};
+                --color-primary: ${safeColor(d.primary)};
+                --color-background: ${safeColor(d.background)};
+                --color-surface: ${safeColor(d.surface)};
+                --color-text: ${safeColor(d.text)};
+                --color-brand-brown: ${safeColor(d.primary)};
+                --color-brand-cream: ${safeColor(d.background)};
+                --color-text-muted: ${safeColor(d.secondary)};
+                --color-secondary: ${safeColor(d.secondary)};
             }
         `;
 
@@ -165,6 +168,11 @@ export const ConfigProvider = ({ children }) => {
     };
 
     const uploadLogo = async (file) => {
+        const MAX_SIZE = 5 * 1024 * 1024;
+        const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        if (file.size > MAX_SIZE) throw new Error('La imagen supera el límite de 5 MB');
+        if (!ALLOWED_TYPES.includes(file.type)) throw new Error('Formato no permitido. Usa JPEG, PNG, WebP o GIF');
+
         try {
             const fileExt = file.name.split('.').pop();
             const fileName = `logo-${Date.now()}.${fileExt}`;

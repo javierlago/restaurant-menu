@@ -1,6 +1,9 @@
 # Database restore scripts (contain data, not for version control)
 supabase/restore_data.sql
 
+# One-time migration scripts (may contain service role keys)
+scripts/
+
 # Environment variables
 .env
 .env.local
