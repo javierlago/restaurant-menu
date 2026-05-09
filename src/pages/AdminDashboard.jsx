@@ -102,13 +102,13 @@ const AdminDashboard = () => {
             });
 
             if (error) {
-                alert('Error: ' + error.message);
+                alert('Email o contraseña incorrectos');
             } else {
                 setIsAuthenticated(true);
             }
         } catch (error) {
             console.error('Login error:', error);
-            alert('Error de conexión');
+            alert('Error de conexión. Inténtalo de nuevo.');
         }
     };
 
@@ -123,7 +123,7 @@ const AdminDashboard = () => {
             alert('Correo de recuperación enviado. Revisa tu bandeja de entrada.');
             setIsRecovering(false);
         } catch (error) {
-            alert('Error al enviar correo: ' + error.message);
+            alert('No se pudo enviar el correo. Verifica la dirección e inténtalo de nuevo.');
         }
     };
 
@@ -148,7 +148,7 @@ const AdminDashboard = () => {
             setConfirmPassword('');
             setIsAuthenticated(true);
         } catch (error) {
-            alert('Error al actualizar contraseña: ' + error.message);
+            alert('No se pudo actualizar la contraseña. Inténtalo de nuevo.');
         }
     };
 
@@ -251,7 +251,7 @@ const AdminDashboard = () => {
             alert('Logo actualizado con éxito');
             setLogoFile(null);
         } catch (error) {
-            alert('Error al actualizar logo: ' + error.message);
+            alert('No se pudo actualizar el logo. Inténtalo de nuevo.');
         } finally {
             setIsUploadingLogo(false);
         }
@@ -311,7 +311,7 @@ const AdminDashboard = () => {
                 pdf.setFontSize(12);
                 pdf.setTextColor(100);
                 pdf.text('Escanea el código para ver nuestra carta', center, yPos, { align: 'center' });
-                pdf.text(window.location.origin, center, yPos + 7, { align: 'center' });
+                pdf.text(import.meta.env.VITE_APP_URL || window.location.origin, center, yPos + 7, { align: 'center' });
 
                 pdf.save('menu-qr.pdf');
             }
@@ -422,7 +422,7 @@ const AdminDashboard = () => {
                             <div className={styles.formGrid}>
                                 <div className={styles.inputGroup}>
                                     <label>Nombre del Plato</label>
-                                    <input placeholder="Ej. Paella Valenciana" value={dishForm.name} onChange={e => setDishForm({ ...dishForm, name: e.target.value })} className={styles.input} required />
+                                    <input placeholder="Ej. Paella Valenciana" value={dishForm.name} onChange={e => setDishForm({ ...dishForm, name: e.target.value })} className={styles.input} required maxLength={100} />
                                 </div>
                                 <div className={styles.inputGroup}>
                                     <label>Categoría / Subcategoría</label>
@@ -441,7 +441,7 @@ const AdminDashboard = () => {
                                 </div>
                                 <div className={styles.inputGroup}>
                                     <label>Tamaño / Porción</label>
-                                    <input placeholder="Ej. 1 Persona, 500g..." value={dishForm.portionSize} onChange={e => setDishForm({ ...dishForm, portionSize: e.target.value })} className={styles.input} />
+                                    <input placeholder="Ej. 1 Persona, 500g..." value={dishForm.portionSize} onChange={e => setDishForm({ ...dishForm, portionSize: e.target.value })} className={styles.input} maxLength={50} />
                                 </div>
                                 <div className={styles.inputGroup}>
                                     <label>Imagen del Plato</label>
@@ -472,11 +472,11 @@ const AdminDashboard = () => {
                                 </div>
                                 <div className={styles.inputGroup}>
                                     <label>Alérgenos</label>
-                                    <input placeholder="Ej. Gluten, Lactosa (separados por coma)" value={dishForm.allergens} onChange={e => setDishForm({ ...dishForm, allergens: e.target.value })} className={styles.input} />
+                                    <input placeholder="Ej. Gluten, Lactosa (separados por coma)" value={dishForm.allergens} onChange={e => setDishForm({ ...dishForm, allergens: e.target.value })} className={styles.input} maxLength={300} />
                                 </div>
                                 <div className={`${styles.inputGroup}`} style={{ gridColumn: '1 / -1' }}>
                                     <label>Descripción</label>
-                                    <textarea placeholder="Describe el plato..." value={dishForm.description} onChange={e => setDishForm({ ...dishForm, description: e.target.value })} className={`${styles.input} ${styles.textarea}`} />
+                                    <textarea placeholder="Describe el plato..." value={dishForm.description} onChange={e => setDishForm({ ...dishForm, description: e.target.value })} className={`${styles.input} ${styles.textarea}`} maxLength={500} />
                                 </div>
                             </div>
                             <button type="submit" className={styles.submitBtn}>{editingDishId ? 'Actualizar' : 'Guardar'}</button>
@@ -685,7 +685,7 @@ const AdminDashboard = () => {
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', padding: '20px', backgroundColor: 'white', borderRadius: '8px', width: 'fit-content', border: '1px solid #eee' }}>
                             <QRCodeCanvas
                                 id="menu-qr"
-                                value={window.location.origin}
+                                value={import.meta.env.VITE_APP_URL || window.location.origin}
                                 size={200}
                                 level={"H"}
                                 includeMargin={true}

@@ -130,7 +130,7 @@ export const MenuProvider = ({ children }) => {
 
         if (error) {
             console.error('Error updating dish:', error);
-            alert('Error al actualizar el plato: ' + error.message);
+            alert('No se pudo actualizar el plato. Inténtalo de nuevo.');
         } else {
             fetchData();
         }
@@ -161,7 +161,7 @@ export const MenuProvider = ({ children }) => {
 
         if (error) {
             console.error('Error adding dish:', error);
-            alert('Error al añadir el plato: ' + error.message);
+            alert('No se pudo añadir el plato. Inténtalo de nuevo.');
             return;
         }
 
@@ -214,7 +214,7 @@ export const MenuProvider = ({ children }) => {
 
         if (error) {
             console.error('Error adding category:', error);
-            alert('Error al añadir categoría: ' + error.message);
+            alert('No se pudo añadir la categoría. Inténtalo de nuevo.');
             return;
         }
 
