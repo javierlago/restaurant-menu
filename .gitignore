@@ -1,6 +1,12 @@
 # Database restore scripts (contain data, not for version control)
 supabase/restore_data.sql
 
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
 # One-time migration scripts (may contain service role keys)
 scripts/
 
