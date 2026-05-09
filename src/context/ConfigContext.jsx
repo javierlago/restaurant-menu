@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { getThemeById } from '../data/themes';
 import { supabase } from '../supabase/client';
+import { validateImageFile, safeColor } from '../utils/validation';
 
 const ConfigContext = createContext();
 
@@ -79,29 +80,29 @@ export const ConfigProvider = ({ children }) => {
             document.head.appendChild(styleEl);
         }
 
-        const safeColor = (value) => /^#[0-9A-Fa-f]{3,8}$/.test(value) ? value : '#000000';
+        const sc = safeColor;
         const l = theme.colors.light;
         const d = theme.colors.dark;
         const css = `
             :root, :root[data-theme="light"] {
-                --color-primary: ${safeColor(l.primary)};
-                --color-background: ${safeColor(l.background)};
-                --color-surface: ${safeColor(l.surface)};
-                --color-text: ${safeColor(l.text)};
-                --color-brand-brown: ${safeColor(l.primary)};
-                --color-brand-cream: ${safeColor(l.background)};
-                --color-text-muted: ${safeColor(l.secondary)};
-                --color-secondary: ${safeColor(l.secondary)};
+                --color-primary: ${sc(l.primary)};
+                --color-background: ${sc(l.background)};
+                --color-surface: ${sc(l.surface)};
+                --color-text: ${sc(l.text)};
+                --color-brand-brown: ${sc(l.primary)};
+                --color-brand-cream: ${sc(l.background)};
+                --color-text-muted: ${sc(l.secondary)};
+                --color-secondary: ${sc(l.secondary)};
             }
             :root[data-theme="dark"] {
-                --color-primary: ${safeColor(d.primary)};
-                --color-background: ${safeColor(d.background)};
-                --color-surface: ${safeColor(d.surface)};
-                --color-text: ${safeColor(d.text)};
-                --color-brand-brown: ${safeColor(d.primary)};
-                --color-brand-cream: ${safeColor(d.background)};
-                --color-text-muted: ${safeColor(d.secondary)};
-                --color-secondary: ${safeColor(d.secondary)};
+                --color-primary: ${sc(d.primary)};
+                --color-background: ${sc(d.background)};
+                --color-surface: ${sc(d.surface)};
+                --color-text: ${sc(d.text)};
+                --color-brand-brown: ${sc(d.primary)};
+                --color-brand-cream: ${sc(d.background)};
+                --color-text-muted: ${sc(d.secondary)};
+                --color-secondary: ${sc(d.secondary)};
             }
         `;
 
@@ -168,10 +169,8 @@ export const ConfigProvider = ({ children }) => {
     };
 
     const uploadLogo = async (file) => {
-        const MAX_SIZE = 5 * 1024 * 1024;
-        const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-        if (file.size > MAX_SIZE) throw new Error('La imagen supera el límite de 5 MB');
-        if (!ALLOWED_TYPES.includes(file.type)) throw new Error('Formato no permitido. Usa JPEG, PNG, WebP o GIF');
+        const validationError = validateImageFile(file);
+        if (validationError) throw new Error(validationError);
 
         try {
             const fileExt = file.name.split('.').pop();

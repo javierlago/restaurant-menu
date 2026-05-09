@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { validatePrice, parseAllergens, validatePassword } from '../utils/validation';
 import { useMenu } from '../context/MenuContext';
 import { useConfig } from '../context/ConfigContext';
 import { supabase } from '../supabase/client';
@@ -131,14 +132,8 @@ const AdminDashboard = () => {
 
     const handleUpdatePassword = async (e) => {
         e.preventDefault();
-        if (newPassword.length < 12) {
-            alert('La contraseña debe tener al menos 12 caracteres');
-            return;
-        }
-        if (newPassword !== confirmPassword) {
-            alert('Las contraseñas no coinciden');
-            return;
-        }
+        const pwError = validatePassword(newPassword, confirmPassword);
+        if (pwError) { alert(pwError); return; }
         try {
             const { error } = await supabase.auth.updateUser({ password: newPassword });
             if (error) throw error;
@@ -177,15 +172,12 @@ const AdminDashboard = () => {
 
     const handleSaveDish = (e) => {
         e.preventDefault();
-        const price = parseFloat(dishForm.price);
-        if (isNaN(price) || price < 0 || price > 9999.99) {
-            alert('El precio debe ser un número válido entre 0 y 9999.99');
-            return;
-        }
+        const priceError = validatePrice(dishForm.price);
+        if (priceError) { alert(priceError); return; }
         const formattedDish = {
             ...dishForm,
-            price,
-            allergens: dishForm.allergens.split(',').map(s => s.trim()).filter(Boolean)
+            price: parseFloat(dishForm.price),
+            allergens: parseAllergens(dishForm.allergens)
         };
 
         if (editingDishId) {

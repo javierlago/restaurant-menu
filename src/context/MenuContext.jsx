@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect, useContext } from 'react';
 import { supabase } from '../supabase/client';
+import { validateImageFile, sanitizeImagePath } from '../utils/validation';
 
 const MenuContext = createContext();
 
@@ -79,13 +80,10 @@ export const MenuProvider = ({ children }) => {
     };
 
     const uploadImage = async (file, path, bucket = 'dish-images') => {
-        const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
-        const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-        if (file.size > MAX_SIZE) throw new Error('La imagen supera el l\u00edmite de 5 MB');
-        if (!ALLOWED_TYPES.includes(file.type)) throw new Error('Formato no permitido. Usa JPEG, PNG, WebP o GIF');
+        const validationError = validateImageFile(file);
+        if (validationError) throw new Error(validationError);
 
-        // Sanitize path/filename to avoid "Invalid key" errors with special chars
-        const sanitizedPath = path.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9\/._-]/g, "");
+        const sanitizedPath = sanitizeImagePath(path);
 
         const { data, error } = await supabase.storage
             .from(bucket)
