@@ -110,7 +110,8 @@ export const MenuProvider = ({ children }) => {
             try {
                 // Upload to folder with ID: dish-images/{id}/{filename}
                 // We trust uploadImage to sanitize the final path, but we construct the base here
-                const path = `${id}/${imageFile.name}`;
+                const ext = imageFile.type.split('/')[1] || 'jpg';
+                const path = `${id}/${Date.now()}.${ext}`;
                 imageUrl = await uploadImage(imageFile, path, 'dish-images');
             } catch (error) {
                 alert('Error al subir la imagen. El plato se actualizará sin la nueva imagen.');
@@ -169,7 +170,8 @@ export const MenuProvider = ({ children }) => {
 
         if (imageFile) {
             try {
-                const path = `${createdDish.id}/${imageFile.name}`;
+                const ext = imageFile.type.split('/')[1] || 'jpg';
+                const path = `${createdDish.id}/${Date.now()}.${ext}`;
                 const imageUrl = await uploadImage(imageFile, path, 'dish-images');
 
                 // Update the dish with the image URL
@@ -225,7 +227,8 @@ export const MenuProvider = ({ children }) => {
             try {
                 // Use a sanitized folder name based on the category name or ID
                 const folderName = name.toLowerCase().replace(/\s+/g, '_');
-                const path = `${folderName}/${imageFile.name}`;
+                const ext = imageFile.type.split('/')[1] || 'jpg';
+                const path = `${folderName}/${Date.now()}.${ext}`;
                 const imageUrl = await uploadImage(imageFile, path, 'categories-images');
 
                 // Update with image URL
@@ -247,7 +250,8 @@ export const MenuProvider = ({ children }) => {
 
         if (imageFile) {
             try {
-                const path = `${id}/${imageFile.name}`;
+                const ext = imageFile.type.split('/')[1] || 'jpg';
+                const path = `${id}/${Date.now()}.${ext}`;
                 imageUrl = await uploadImage(imageFile, path, 'categories-images');
             } catch (error) {
                 alert('Error al subir imagen de categoría.');
