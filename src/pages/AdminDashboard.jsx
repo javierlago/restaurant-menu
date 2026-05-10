@@ -71,21 +71,31 @@ const AdminDashboard = () => {
     const [logoFile, setLogoFile] = useState(null);
     const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
-    // Check for existing session or password recovery event
+    // Check for existing session or password recovery/invite event
     useEffect(() => {
-        // Check if arriving from an invitation link (hash contains type=invite)
-        const hashParams = new URLSearchParams(window.location.hash.replace('#', '?'));
-        const isInviteLink = hashParams.get('type') === 'invite';
-
         supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session && !isInviteLink) setIsAuthenticated(true);
+            if (session) setIsAuthenticated(true);
         });
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && isInviteLink)) {
+            if (event === 'PASSWORD_RECOVERY') {
                 setShowPasswordReset(true);
             } else if (event === 'SIGNED_IN') {
-                setIsAuthenticated(true);
+                // Detect invite flow via JWT AMR claim — works for both PKCE and implicit flows.
+                // Supabase clears the URL hash before React renders, so we can't rely on it.
+                let isInvite = false;
+                if (session?.user?.invited_at && session?.access_token) {
+                    try {
+                        const payload = JSON.parse(atob(session.access_token.split('.')[1]));
+                        const amr = payload.amr || [];
+                        isInvite = amr.some(a => a.method === 'otp');
+                    } catch { /* ignore malformed JWT */ }
+                }
+                if (isInvite) {
+                    setShowPasswordReset(true);
+                } else {
+                    setIsAuthenticated(true);
+                }
             } else if (event === 'SIGNED_OUT') {
                 setIsAuthenticated(false);
             }
