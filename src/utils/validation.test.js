@@ -24,9 +24,9 @@ describe('validateImageFile', () => {
         expect(validateImageFile(makeFile(1000, 'image/gif'))).toBeNull();
     });
 
-    it('rechaza una imagen que supera 5 MB', () => {
-        const error = validateImageFile(makeFile(6 * 1024 * 1024, 'image/jpeg'));
-        expect(error).toMatch(/5 MB/);
+    it('rechaza una imagen que supera 15 MB', () => {
+        const error = validateImageFile(makeFile(16 * 1024 * 1024, 'image/jpeg'));
+        expect(error).toMatch(/15 MB/);
     });
 
     it('rechaza un tipo de archivo no permitido', () => {
@@ -34,13 +34,13 @@ describe('validateImageFile', () => {
         expect(error).toMatch(/Formato no permitido/);
     });
 
-    it('rechaza exactamente en el límite de 5 MB + 1 byte', () => {
-        const error = validateImageFile(makeFile(5 * 1024 * 1024 + 1, 'image/jpeg'));
-        expect(error).toMatch(/5 MB/);
+    it('rechaza exactamente en el límite de 15 MB + 1 byte', () => {
+        const error = validateImageFile(makeFile(15 * 1024 * 1024 + 1, 'image/jpeg'));
+        expect(error).toMatch(/15 MB/);
     });
 
-    it('acepta exactamente 5 MB', () => {
-        expect(validateImageFile(makeFile(5 * 1024 * 1024, 'image/jpeg'))).toBeNull();
+    it('acepta exactamente 15 MB', () => {
+        expect(validateImageFile(makeFile(15 * 1024 * 1024, 'image/jpeg'))).toBeNull();
     });
 });
 

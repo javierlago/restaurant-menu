@@ -1,9 +1,9 @@
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
+const MAX_IMAGE_SIZE = 15 * 1024 * 1024; // 15 MB
 
 export function validateImageFile(file) {
     if (file.size > MAX_IMAGE_SIZE) {
-        return 'La imagen supera el límite de 5 MB';
+        return 'La imagen supera el límite de 15 MB';
     }
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
         return 'Formato no permitido. Usa JPEG, PNG, WebP o GIF';
