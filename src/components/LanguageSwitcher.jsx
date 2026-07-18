@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { FaGlobe } from 'react-icons/fa';
 import { useLocale } from '../context/LocaleContext';
 import { SUPPORTED_LOCALES } from '../i18n';
 import es from '../i18n/es';
@@ -38,7 +39,9 @@ const LanguageSwitcher = () => {
                 aria-haspopup="listbox"
                 aria-expanded={open}
                 aria-label="Cambiar idioma"
+                title="Idioma / Language"
             >
+                <FaGlobe className={styles.icon} />
                 {locale.toUpperCase()}
             </button>
             {open && (

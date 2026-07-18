@@ -3,6 +3,9 @@
 }
 
 .trigger {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     background: transparent;
     border: 1px solid var(--border-color);
     color: var(--color-text);
@@ -15,6 +18,10 @@
 
 .trigger:hover {
     background: var(--color-surface-hover);
+}
+
+.icon {
+    font-size: 0.95rem;
 }
 
 .menu {
