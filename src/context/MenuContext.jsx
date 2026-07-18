@@ -1,12 +1,14 @@
 import { createContext, useState, useEffect, useContext } from 'react';
 import { supabase } from '../supabase/client';
 import { validateImageFile, sanitizeImagePath } from '../utils/validation';
+import { useNotification } from './NotificationContext';
 
 const MenuContext = createContext();
 
 export const useMenu = () => useContext(MenuContext);
 
 export const MenuProvider = ({ children }) => {
+    const { showToast } = useNotification();
     const [menuItems, setMenuItems] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -72,7 +74,7 @@ export const MenuProvider = ({ children }) => {
 
         if (error) {
             console.error('Error toggling visibility:', error);
-            alert('Error al actualizar la visibilidad');
+            showToast('Error al actualizar la visibilidad', 'error');
         } else {
             // Optimistic update or wait for subscription
             fetchData();
@@ -130,16 +132,16 @@ export const MenuProvider = ({ children }) => {
 
         if (error) {
             console.error('Error updating dish:', error);
-            alert('No se pudo actualizar el plato. Inténtalo de nuevo.');
+            showToast('No se pudo actualizar el plato. Inténtalo de nuevo.', 'error');
             return;
         }
 
         fetchData();
 
         if (imageError) {
-            alert('Plato actualizado, pero falló la subida de la nueva imagen.');
+            showToast('Plato actualizado, pero falló la subida de la nueva imagen.', 'error');
         } else {
-            alert('Plato actualizado');
+            showToast('Plato actualizado', 'success');
         }
     };
 
@@ -168,7 +170,7 @@ export const MenuProvider = ({ children }) => {
 
         if (error) {
             console.error('Error adding dish:', error);
-            alert('No se pudo añadir el plato. Inténtalo de nuevo.');
+            showToast('No se pudo añadir el plato. Inténtalo de nuevo.', 'error');
             return;
         }
 
@@ -195,9 +197,9 @@ export const MenuProvider = ({ children }) => {
         fetchData();
 
         if (imageError) {
-            alert('Plato creado, pero falló la subida de imagen: ' + imageError.message);
+            showToast('Plato creado, pero falló la subida de imagen: ' + imageError.message, 'error');
         } else {
-            alert('Plato añadido');
+            showToast('Plato añadido', 'success');
         }
     };
 
@@ -209,9 +211,10 @@ export const MenuProvider = ({ children }) => {
 
         if (error) {
             console.error('Error deleting dish:', error);
-            alert('Error al eliminar el plato');
+            showToast('Error al eliminar el plato', 'error');
         } else {
             fetchData();
+            showToast('Plato eliminado', 'success');
         }
     };
 
@@ -229,11 +232,12 @@ export const MenuProvider = ({ children }) => {
 
         if (error) {
             console.error('Error adding category:', error);
-            alert('No se pudo añadir la categoría. Inténtalo de nuevo.');
+            showToast('No se pudo añadir la categoría. Inténtalo de nuevo.', 'error');
             return;
         }
 
         const newCategory = data;
+        let imageError = null;
 
         // Upload Image if present
         if (imageFile) {
@@ -251,15 +255,22 @@ export const MenuProvider = ({ children }) => {
                     .eq('id', newCategory.id);
 
             } catch (uploadError) {
-                alert('Categoría creada, pero falló la subida de imagen: ' + uploadError.message);
+                imageError = uploadError;
             }
         }
 
         fetchData();
+
+        if (imageError) {
+            showToast('Categoría creada, pero falló la subida de imagen: ' + imageError.message, 'error');
+        } else {
+            showToast('Categoría añadida', 'success');
+        }
     };
 
     const updateCategory = async (id, updatedFields, imageFile) => {
         let imageUrl = updatedFields.image;
+        let imageError = null;
 
         if (imageFile) {
             try {
@@ -267,7 +278,7 @@ export const MenuProvider = ({ children }) => {
                 const path = `${id}/${Date.now()}.${ext}`;
                 imageUrl = await uploadImage(imageFile, path, 'categories-images');
             } catch (error) {
-                alert('Error al subir imagen de categoría.');
+                imageError = error;
             }
         }
 
@@ -283,9 +294,16 @@ export const MenuProvider = ({ children }) => {
 
         if (error) {
             console.error('Error updating category:', error);
-            alert('Error al actualizar categoría');
+            showToast('Error al actualizar categoría', 'error');
+            return;
+        }
+
+        fetchData();
+
+        if (imageError) {
+            showToast('Categoría actualizada, pero falló la subida de la nueva imagen.', 'error');
         } else {
-            fetchData();
+            showToast('Categoría actualizada', 'success');
         }
     };
 
@@ -297,9 +315,10 @@ export const MenuProvider = ({ children }) => {
 
         if (error) {
             console.error('Error deleting category:', error);
-            alert('Error al eliminar categoría');
+            showToast('Error al eliminar categoría', 'error');
         } else {
             fetchData();
+            showToast('Categoría eliminada', 'success');
         }
     };
 

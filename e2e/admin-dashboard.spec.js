@@ -129,21 +129,17 @@ test.describe('Admin — Formulario de login', () => {
         await mockAuthLogin(page, { success: false });
         await page.goto('/admin');
 
-        const dialogPromise = page.waitForEvent('dialog');
         await page.getByPlaceholder('Correo Electrónico').fill('wrong@test.com');
         await page.getByPlaceholder('Contraseña').fill('badpassword');
         await page.getByRole('button', { name: 'Entrar' }).click();
 
-        const dialog = await dialogPromise;
-        expect(dialog.message()).toContain('Email o contraseña incorrectos');
-        await dialog.accept();
+        await expect(page.getByText('Email o contraseña incorrectos')).toBeVisible();
     });
 
     test('login correcto muestra el panel de administración', async ({ page }) => {
         await mockAuthLogin(page, { success: true });
         await page.goto('/admin');
 
-        page.on('dialog', d => d.accept());
         await page.getByPlaceholder('Correo Electrónico').fill('admin@test.com');
         await page.getByPlaceholder('Contraseña').fill('AdminPass123!');
         await page.getByRole('button', { name: 'Entrar' }).click();
@@ -225,15 +221,8 @@ test.describe('Admin — Gestión de platos', () => {
         await priceInput.fill('12.50');
         await expect(priceInput).toHaveValue('12.50');
 
-        // Playwright bloquea el await click() mientras haya un diálogo sin resolver.
-        // Registramos el handler ANTES del click para que se descarte durante la acción.
-        let dialogMessage = '';
-        page.once('dialog', async dialog => {
-            dialogMessage = dialog.message();
-            await dialog.accept();
-        });
-        await page.getByRole('button', { name: 'Guardar' }).click({ force: true });
-        expect(dialogMessage).toContain('Plato añadido');
+        await page.getByRole('button', { name: 'Guardar' }).click();
+        await expect(page.getByText('Plato añadido')).toBeVisible();
     });
 
     test('cada plato tiene botón de editar accesible', async ({ page }) => {
@@ -243,21 +232,14 @@ test.describe('Admin — Gestión de platos', () => {
     });
 
     test('eliminar plato muestra diálogo con nombre del plato', async ({ page }) => {
-        let confirmMessage = '';
-
-        // Registrar handler ANTES del click
-        page.once('dialog', async dialog => {
-            confirmMessage = dialog.message();
-            await dialog.accept();
-        });
-
         await page.getByTitle('Eliminar').first().click();
-        // Esperar a que se procese
-        await expect(async () => {
-            expect(confirmMessage).toContain('Croquetas');
-        }).toPass({ timeout: 3000 });
 
-        expect(confirmMessage).toContain('Esta acción no se puede deshacer');
+        const dialog = page.getByRole('alertdialog');
+        await expect(dialog).toBeVisible();
+        await expect(dialog).toContainText('Croquetas');
+        await expect(dialog).toContainText('Esta acción no se puede deshacer');
+
+        await dialog.getByRole('button', { name: 'Eliminar' }).click();
     });
 
     test('cancelar eliminación no envía DELETE al servidor', async ({ page }) => {
@@ -268,8 +250,11 @@ test.describe('Admin — Gestión de platos', () => {
             }
         });
 
-        page.once('dialog', dialog => dialog.dismiss()); // Cancelar
         await page.getByTitle('Eliminar').first().click();
+        const dialog = page.getByRole('alertdialog');
+        await expect(dialog).toBeVisible();
+        await dialog.getByRole('button', { name: 'Cancelar' }).click();
+        await expect(dialog).not.toBeVisible();
 
         // Dar tiempo a que se procese
         await page.waitForTimeout(500);
@@ -304,13 +289,8 @@ test.describe('Admin — Gestión de categorías', () => {
         await nameInput.fill('Bebidas');
         await expect(nameInput).toHaveValue('Bebidas');
 
-        let dialogMessage = '';
-        page.once('dialog', async dialog => {
-            dialogMessage = dialog.message();
-            await dialog.accept();
-        });
-        await page.getByRole('button', { name: 'Añadir Categoría' }).click({ force: true });
-        expect(dialogMessage).toContain('Categoría añadida');
+        await page.getByRole('button', { name: 'Añadir Categoría' }).click();
+        await expect(page.getByText('Categoría añadida')).toBeVisible();
     });
 
     test('botón editar categoría rellena el formulario', async ({ page }) => {
@@ -322,19 +302,12 @@ test.describe('Admin — Gestión de categorías', () => {
     });
 
     test('eliminar categoría muestra diálogo de confirmación', async ({ page }) => {
-        let confirmMessage = '';
-
-        page.once('dialog', async dialog => {
-            confirmMessage = dialog.message();
-            await dialog.accept();
-        });
-
         // El botón delete es el SIGUIENTE al botón "Ocultar"
         await page.locator('xpath=(//button[@title="Ocultar" or @title="Mostrar"])[1]/following-sibling::button[1]').click();
 
-        await expect(async () => {
-            expect(confirmMessage).toContain('Entrantes');
-        }).toPass({ timeout: 3000 });
+        const dialog = page.getByRole('alertdialog');
+        await expect(dialog).toBeVisible();
+        await expect(dialog).toContainText('Entrantes');
     });
 });
 

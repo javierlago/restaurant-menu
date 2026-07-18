@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { validatePrice, parseAllergens, validatePassword } from '../utils/validation';
 import { useMenu } from '../context/MenuContext';
 import { useConfig } from '../context/ConfigContext';
+import { useNotification } from '../context/NotificationContext';
 import { supabase } from '../supabase/client';
 import { THEMES } from '../data/themes';
 import { QRCodeCanvas } from 'qrcode.react';
@@ -32,6 +33,7 @@ import { CSS } from '@dnd-kit/utilities';
 const AdminDashboard = () => {
     const { menuItems, categories, toggleVisibility, updateDish, addDish, deleteDish, addCategory, updateCategory, deleteCategory, toggleCategoryVisibility, reorderCategories } = useMenu();
     const { config, updateConfig, updateColor, uploadLogo } = useConfig();
+    const { showToast, confirmDialog } = useNotification();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -113,13 +115,13 @@ const AdminDashboard = () => {
             });
 
             if (error) {
-                alert('Email o contraseña incorrectos');
+                showToast('Email o contraseña incorrectos', 'error');
             } else {
                 setIsAuthenticated(true);
             }
         } catch (error) {
             console.error('Login error:', error);
-            alert('Error de conexión. Inténtalo de nuevo.');
+            showToast('Error de conexión. Inténtalo de nuevo.', 'error');
         }
     };
 
@@ -131,10 +133,10 @@ const AdminDashboard = () => {
                 redirectTo: `${appUrl}/admin`,
             });
             if (error) throw error;
-            alert('Correo de recuperación enviado. Revisa tu bandeja de entrada.');
+            showToast('Correo de recuperación enviado. Revisa tu bandeja de entrada.', 'success');
             setIsRecovering(false);
         } catch (error) {
-            alert('No se pudo enviar el correo. Verifica la dirección e inténtalo de nuevo.');
+            showToast('No se pudo enviar el correo. Verifica la dirección e inténtalo de nuevo.', 'error');
         }
     };
 
@@ -143,17 +145,17 @@ const AdminDashboard = () => {
     const handleUpdatePassword = async (e) => {
         e.preventDefault();
         const pwError = validatePassword(newPassword, confirmPassword);
-        if (pwError) { alert(pwError); return; }
+        if (pwError) { showToast(pwError, 'error'); return; }
         try {
             const { error } = await supabase.auth.updateUser({ password: newPassword });
             if (error) throw error;
-            alert('Contraseña actualizada con éxito. Ya puedes acceder al panel.');
+            showToast('Contraseña actualizada con éxito. Ya puedes acceder al panel.', 'success');
             setShowPasswordReset(false);
             setNewPassword('');
             setConfirmPassword('');
             setIsAuthenticated(true);
         } catch (error) {
-            alert('No se pudo actualizar la contraseña. Inténtalo de nuevo.');
+            showToast('No se pudo actualizar la contraseña. Inténtalo de nuevo.', 'error');
         }
     };
 
@@ -183,7 +185,7 @@ const AdminDashboard = () => {
     const handleSaveDish = async (e) => {
         e.preventDefault();
         const priceError = validatePrice(dishForm.price);
-        if (priceError) { alert(priceError); return; }
+        if (priceError) { showToast(priceError, 'error'); return; }
         const formattedDish = {
             ...dishForm,
             price: parseFloat(dishForm.price),
@@ -213,17 +215,15 @@ const AdminDashboard = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const handleSaveCategory = (e) => {
+    const handleSaveCategory = async (e) => {
         e.preventDefault();
         if (!categoryForm.name) return;
 
         if (editingCategoryId) {
-            updateCategory(editingCategoryId, categoryForm, categoryImageFile);
-            alert('Categoría actualizada');
+            await updateCategory(editingCategoryId, categoryForm, categoryImageFile);
             setEditingCategoryId(null);
         } else {
-            addCategory(categoryForm.name, categoryImageFile, categoryForm.parent_id || null, categoryForm.image_position);
-            alert('Categoría añadida');
+            await addCategory(categoryForm.name, categoryImageFile, categoryForm.parent_id || null, categoryForm.image_position);
         }
         setCategoryForm({ name: '', image: '', parent_id: '', image_position: 'center' });
         setCategoryImageFile(null);
@@ -248,10 +248,10 @@ const AdminDashboard = () => {
         setIsUploadingLogo(true);
         try {
             await uploadLogo(logoFile);
-            alert('Logo actualizado con éxito');
+            showToast('Logo actualizado con éxito', 'success');
             setLogoFile(null);
         } catch (error) {
-            alert('No se pudo actualizar el logo. Inténtalo de nuevo.');
+            showToast('No se pudo actualizar el logo. Inténtalo de nuevo.', 'error');
         } finally {
             setIsUploadingLogo(false);
         }
@@ -317,7 +317,7 @@ const AdminDashboard = () => {
             }
         } catch (error) {
             console.error("Error downloading QR:", error);
-            alert("Error al descargar el archivo. Intente nuevamente.");
+            showToast('Error al descargar el archivo. Intente nuevamente.', 'error');
         }
     };
 
@@ -496,7 +496,7 @@ const AdminDashboard = () => {
                                     <span className={styles.priceTag}>{item.price}€</span>
                                     <button onClick={() => handleEditClick(item)} className={styles.btnEdit} title="Editar"><FaEdit /></button>
                                     <button onClick={() => toggleVisibility(item.id)} className={styles.btnIcon} title="Ocultar">{item.isVisible ? <FaEye /> : <FaEyeSlash />}</button>
-                                    <button onClick={() => { if (window.confirm(`¿Eliminar el plato "${item.name}"? Esta acción no se puede deshacer.`)) deleteDish(item.id); }} className={styles.btnDelete} title="Eliminar"><FaTrash /></button>
+                                    <button onClick={async () => { if (await confirmDialog(`¿Eliminar el plato "${item.name}"? Esta acción no se puede deshacer.`)) deleteDish(item.id); }} className={styles.btnDelete} title="Eliminar"><FaTrash /></button>
                                 </div>
                             </div>
                         ))}
@@ -723,6 +723,7 @@ const AdminDashboard = () => {
 };
 
 const SortableItem = ({ cat, handleEditCategoryClick, toggleCategoryVisibility, deleteCategory }) => {
+    const { confirmDialog } = useNotification();
     const {
         attributes,
         listeners,
@@ -757,7 +758,7 @@ const SortableItem = ({ cat, handleEditCategoryClick, toggleCategoryVisibility, 
                 <button onClick={() => toggleCategoryVisibility(cat.id)} className={styles.btnIcon} title={cat.isVisible !== false ? "Ocultar" : "Mostrar"}>
                     {cat.isVisible !== false ? <FaEye /> : <FaEyeSlash />}
                 </button>
-                <button onClick={() => { if (window.confirm(`¿Eliminar la categoría "${cat.name}"? Esta acción no se puede deshacer.`)) deleteCategory(cat.id); }} className={styles.btnDelete}><FaTrash /></button>
+                <button onClick={async () => { if (await confirmDialog(`¿Eliminar la categoría "${cat.name}"? Esta acción no se puede deshacer.`)) deleteCategory(cat.id); }} className={styles.btnDelete}><FaTrash /></button>
             </div>
         </div>
     );

@@ -6,6 +6,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import { MenuProvider } from './context/MenuContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ConfigProvider } from './context/ConfigContext';
+import { NotificationProvider } from './context/NotificationContext';
 
 function AuthHashRedirect() {
   const location = useLocation();
@@ -18,20 +19,22 @@ function AuthHashRedirect() {
 function App() {
   return (
     <Router>
-      <ConfigProvider>
-        <ThemeProvider>
-          <MenuProvider>
-            <Layout>
-              <AuthHashRedirect />
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/category/:id" element={<CategoryView />} />
-                <Route path="/admin" element={<AdminDashboard />} />
-              </Routes>
-            </Layout>
-          </MenuProvider>
-        </ThemeProvider>
-      </ConfigProvider>
+      <NotificationProvider>
+        <ConfigProvider>
+          <ThemeProvider>
+            <MenuProvider>
+              <Layout>
+                <AuthHashRedirect />
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/category/:id" element={<CategoryView />} />
+                  <Route path="/admin" element={<AdminDashboard />} />
+                </Routes>
+              </Layout>
+            </MenuProvider>
+          </ThemeProvider>
+        </ConfigProvider>
+      </NotificationProvider>
     </Router>
   )
 }
