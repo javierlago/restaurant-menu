@@ -7,6 +7,7 @@ import { MenuProvider } from './context/MenuContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ConfigProvider } from './context/ConfigContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { LocaleProvider } from './context/LocaleContext';
 
 function AuthHashRedirect() {
   const location = useLocation();
@@ -20,20 +21,22 @@ function App() {
   return (
     <Router>
       <NotificationProvider>
-        <ConfigProvider>
-          <ThemeProvider>
-            <MenuProvider>
-              <Layout>
-                <AuthHashRedirect />
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/category/:id" element={<CategoryView />} />
-                  <Route path="/admin" element={<AdminDashboard />} />
-                </Routes>
-              </Layout>
-            </MenuProvider>
-          </ThemeProvider>
-        </ConfigProvider>
+        <LocaleProvider>
+          <ConfigProvider>
+            <ThemeProvider>
+              <MenuProvider>
+                <Layout>
+                  <AuthHashRedirect />
+                  <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/category/:id" element={<CategoryView />} />
+                    <Route path="/admin" element={<AdminDashboard />} />
+                  </Routes>
+                </Layout>
+              </MenuProvider>
+            </ThemeProvider>
+          </ConfigProvider>
+        </LocaleProvider>
       </NotificationProvider>
     </Router>
   )

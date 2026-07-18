@@ -219,14 +219,14 @@ export const MenuProvider = ({ children }) => {
     };
 
     // Category Actions
-    const addCategory = async (name, imageFile, parentId = null, imagePosition = 'center') => {
+    const addCategory = async (name, imageFile, parentId = null, imagePosition = 'center', translations = {}) => {
         // Generate slug from name
         const slug = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
         // Optimistically insert category first (let DB generate ID)
         const { data, error } = await supabase
             .from('categories')
-            .insert([{ name, slug, image: '', isVisible: true, parent_id: parentId, image_position: imagePosition }])
+            .insert([{ name, slug, image: '', isVisible: true, parent_id: parentId, image_position: imagePosition, translations }])
             .select()
             .single();
 

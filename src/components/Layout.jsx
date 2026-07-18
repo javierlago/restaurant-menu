@@ -1,11 +1,14 @@
 import { Link } from 'react-router-dom';
 import { FaUtensils, FaLock } from 'react-icons/fa';
 import ThemeToggle from './ThemeToggle';
+import LanguageSwitcher from './LanguageSwitcher';
 import styles from './Layout.module.css';
 import { useConfig } from '../context/ConfigContext';
+import { useLocale } from '../context/LocaleContext';
 
 const Layout = ({ children }) => {
     const { config } = useConfig();
+    const { t } = useLocale();
 
     return (
         <div className={styles.container}>
@@ -23,8 +26,9 @@ const Layout = ({ children }) => {
                         </Link>
                     )}
 
-                    {/* Right: Theme Toggle */}
+                    {/* Right: Language + Theme Toggle */}
                     <div className={styles.rightControls}>
+                        <LanguageSwitcher />
                         <ThemeToggle />
                     </div>
                 </div>
@@ -37,7 +41,7 @@ const Layout = ({ children }) => {
             <footer className={styles.footer}>
                 <p>© {new Date().getFullYear()} {config.restaurantName}</p>
                 <Link to="/admin" className={styles.adminLink}>
-                    <FaLock size={12} /> Admin Access
+                    <FaLock size={12} /> {t('layout.adminAccess')}
                 </Link>
             </footer>
         </div>

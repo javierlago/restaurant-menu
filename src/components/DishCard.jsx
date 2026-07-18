@@ -1,14 +1,21 @@
 import styles from './DishCard.module.css';
 import ImagePlaceholder from './ImagePlaceholder';
+import { useLocale } from '../context/LocaleContext';
+import { localizedField } from '../utils/localize';
 
 const DishCard = ({ dish }) => {
+    const { locale, tAllergen } = useLocale();
+    const name = localizedField(dish, 'name', locale);
+    const description = localizedField(dish, 'description', locale);
+    const portionSize = localizedField(dish, 'portionSize', locale);
+
     return (
         <div className={styles.card}>
             <div className={styles.imageContainer}>
                 {dish.image ? (
                     <img
                         src={dish.image}
-                        alt={dish.name}
+                        alt={name}
                         className={styles.image}
                         loading="lazy"
                         style={{ objectPosition: dish.image_position || 'center' }}
@@ -23,21 +30,21 @@ const DishCard = ({ dish }) => {
 
             <div className={styles.content}>
                 <div className={styles.header}>
-                    <h3 className={styles.name}>{dish.name}</h3>
+                    <h3 className={styles.name}>{name}</h3>
                 </div>
 
-                <p className={styles.description}>{dish.description}</p>
+                <p className={styles.description}>{description}</p>
 
                 <div className={styles.footer}>
                     <div className={styles.details}>
-                        <span className={styles.portion}>{dish.portionSize}</span>
+                        <span className={styles.portion}>{portionSize}</span>
                     </div>
 
                     {dish.allergens && dish.allergens.length > 0 && (
                         <div className={styles.allergens}>
                             {dish.allergens.map((allergen) => (
                                 <span key={allergen} className={styles.allergenTag}>
-                                    {allergen}
+                                    {tAllergen(allergen)}
                                 </span>
                             ))}
                         </div>

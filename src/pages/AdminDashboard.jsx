@@ -11,6 +11,7 @@ import { FaEye, FaEyeSlash, FaTrash, FaPlus, FaEdit, FaTimes, FaCheck, FaUpload,
 import styles from './AdminDashboard.module.css';
 import FocalPointSelector from '../components/FocalPointSelector';
 import DishCard from '../components/DishCard';
+import LangTabBar from '../components/LangTabBar';
 
 // DND Kit Imports
 import {
@@ -62,12 +63,14 @@ const AdminDashboard = () => {
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [editingDishId, setEditingDishId] = useState(null);
     const [dishForm, setDishForm] = useState({
-        name: '', category_id: '', price: '', description: '', allergens: '', portionSize: '', image: '', image_position: 'center'
+        name: '', category_id: '', price: '', description: '', allergens: '', portionSize: '', image: '', image_position: 'center', translations: {}
     });
     const [imageFile, setImageFile] = useState(null);
+    const [dishLangTab, setDishLangTab] = useState('es');
+    const [categoryLangTab, setCategoryLangTab] = useState('es');
 
     const [editingCategoryId, setEditingCategoryId] = useState(null);
-    const [categoryForm, setCategoryForm] = useState({ name: '', image: '', parent_id: '', image_position: 'center' });
+    const [categoryForm, setCategoryForm] = useState({ name: '', image: '', parent_id: '', image_position: 'center', translations: {} });
     const [categoryImageFile, setCategoryImageFile] = useState(null);
 
     const [logoFile, setLogoFile] = useState(null);
@@ -174,10 +177,12 @@ const AdminDashboard = () => {
             allergens: dish.allergens.join(', '),
             portionSize: dish.portionSize,
             image: dish.image, // Keep URL for display
-            image_position: dish.image_position || 'center'
+            image_position: dish.image_position || 'center',
+            translations: dish.translations || {}
         });
         setEditingDishId(dish.id);
         setImageFile(null); // Reset file input
+        setDishLangTab('es');
         setIsFormVisible(true);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -201,17 +206,33 @@ const AdminDashboard = () => {
     };
 
     const resetForm = () => {
-        setDishForm({ name: '', category_id: categories[0]?.id || '', price: '', description: '', allergens: '', portionSize: '', image: '', image_position: 'center' });
+        setDishForm({ name: '', category_id: categories[0]?.id || '', price: '', description: '', allergens: '', portionSize: '', image: '', image_position: 'center', translations: {} });
         setEditingDishId(null);
         setImageFile(null);
+        setDishLangTab('es');
         setIsFormVisible(false);
+    };
+
+    const updateDishTranslation = (langCode, field, value) => {
+        setDishForm(prev => ({
+            ...prev,
+            translations: { ...prev.translations, [langCode]: { ...prev.translations?.[langCode], [field]: value } }
+        }));
+    };
+
+    const updateCategoryTranslation = (langCode, field, value) => {
+        setCategoryForm(prev => ({
+            ...prev,
+            translations: { ...prev.translations, [langCode]: { ...prev.translations?.[langCode], [field]: value } }
+        }));
     };
 
     // Category Actions
     const handleEditCategoryClick = (cat) => {
-        setCategoryForm({ name: cat.name, image: cat.image, parent_id: cat.parent_id || '', image_position: cat.image_position || 'center' });
+        setCategoryForm({ name: cat.name, image: cat.image, parent_id: cat.parent_id || '', image_position: cat.image_position || 'center', translations: cat.translations || {} });
         setEditingCategoryId(cat.id);
         setCategoryImageFile(null);
+        setCategoryLangTab('es');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -223,10 +244,11 @@ const AdminDashboard = () => {
             await updateCategory(editingCategoryId, categoryForm, categoryImageFile);
             setEditingCategoryId(null);
         } else {
-            await addCategory(categoryForm.name, categoryImageFile, categoryForm.parent_id || null, categoryForm.image_position);
+            await addCategory(categoryForm.name, categoryImageFile, categoryForm.parent_id || null, categoryForm.image_position, categoryForm.translations);
         }
-        setCategoryForm({ name: '', image: '', parent_id: '', image_position: 'center' });
+        setCategoryForm({ name: '', image: '', parent_id: '', image_position: 'center', translations: {} });
         setCategoryImageFile(null);
+        setCategoryLangTab('es');
     };
 
     const handleDragEnd = (event) => {
@@ -419,66 +441,105 @@ const AdminDashboard = () => {
                     {isFormVisible && (
                         <form onSubmit={handleSaveDish} className={styles.formPanel}>
                             <h3>{editingDishId ? 'Editar Plato' : 'Nuevo Plato'}</h3>
-                            <div className={styles.formGrid}>
-                                <div className={styles.inputGroup}>
-                                    <label>Nombre del Plato</label>
-                                    <input placeholder="Ej. Paella Valenciana" value={dishForm.name} onChange={e => setDishForm({ ...dishForm, name: e.target.value })} className={styles.input} required maxLength={100} />
-                                </div>
-                                <div className={styles.inputGroup}>
-                                    <label>Categoría / Subcategoría</label>
-                                    <select value={dishForm.category_id} onChange={e => setDishForm({ ...dishForm, category_id: e.target.value })} className={styles.select}>
-                                        <option value="">-- Seleccionar --</option>
-                                        {categories.map(cat => (
-                                            <option key={cat.id} value={cat.id}>
-                                                {cat.parent_id ? `↳ ${cat.name}` : cat.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className={styles.inputGroup}>
-                                    <label>Precio (€)</label>
-                                    <input type="number" step="0.01" placeholder="0.00" value={dishForm.price} onChange={e => setDishForm({ ...dishForm, price: e.target.value })} className={styles.input} required />
-                                </div>
-                                <div className={styles.inputGroup}>
-                                    <label>Tamaño / Porción</label>
-                                    <input placeholder="Ej. 1 Persona, 500g..." value={dishForm.portionSize} onChange={e => setDishForm({ ...dishForm, portionSize: e.target.value })} className={styles.input} maxLength={50} />
-                                </div>
-                                <div className={styles.inputGroup}>
-                                    <label>Imagen del Plato</label>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={e => setImageFile(e.target.files[0])}
-                                        className={styles.input}
-                                    />
-                                </div>
-                                <div className={styles.inputGroup} style={{ gridColumn: '1 / -1' }}>
-                                    <label>Punto de Enfoque (Visual)</label>
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 1fr) 280px', gap: '20px', alignItems: 'start' }}>
-                                        <div>
-                                            <FocalPointSelector
-                                                imageUrl={imageFile ? URL.createObjectURL(imageFile) : dishForm.image}
-                                                value={dishForm.image_position}
-                                                onChange={(pos) => setDishForm({ ...dishForm, image_position: pos })}
-                                            />
-                                        </div>
-                                        <div>
-                                            <p style={{ fontSize: '0.8rem', marginBottom: '10px', fontWeight: 'bold' }}>Vista previa de la Tarjeta:</p>
-                                            <div style={{ transform: 'scale(0.8)', transformOrigin: 'top left', width: '350px' }}>
-                                                <DishCard dish={{ ...dishForm, image: imageFile ? URL.createObjectURL(imageFile) : dishForm.image }} />
+                            <LangTabBar active={dishLangTab} onChange={setDishLangTab} />
+                            {dishLangTab === 'es' ? (
+                                <div className={styles.formGrid}>
+                                    <div className={styles.inputGroup}>
+                                        <label>Nombre del Plato</label>
+                                        <input placeholder="Ej. Paella Valenciana" value={dishForm.name} onChange={e => setDishForm({ ...dishForm, name: e.target.value })} className={styles.input} required maxLength={100} />
+                                    </div>
+                                    <div className={styles.inputGroup}>
+                                        <label>Categoría / Subcategoría</label>
+                                        <select value={dishForm.category_id} onChange={e => setDishForm({ ...dishForm, category_id: e.target.value })} className={styles.select}>
+                                            <option value="">-- Seleccionar --</option>
+                                            {categories.map(cat => (
+                                                <option key={cat.id} value={cat.id}>
+                                                    {cat.parent_id ? `↳ ${cat.name}` : cat.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className={styles.inputGroup}>
+                                        <label>Precio (€)</label>
+                                        <input type="number" step="0.01" placeholder="0.00" value={dishForm.price} onChange={e => setDishForm({ ...dishForm, price: e.target.value })} className={styles.input} required />
+                                    </div>
+                                    <div className={styles.inputGroup}>
+                                        <label>Tamaño / Porción</label>
+                                        <input placeholder="Ej. 1 Persona, 500g..." value={dishForm.portionSize} onChange={e => setDishForm({ ...dishForm, portionSize: e.target.value })} className={styles.input} maxLength={50} />
+                                    </div>
+                                    <div className={styles.inputGroup}>
+                                        <label>Imagen del Plato</label>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={e => setImageFile(e.target.files[0])}
+                                            className={styles.input}
+                                        />
+                                    </div>
+                                    <div className={styles.inputGroup} style={{ gridColumn: '1 / -1' }}>
+                                        <label>Punto de Enfoque (Visual)</label>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 1fr) 280px', gap: '20px', alignItems: 'start' }}>
+                                            <div>
+                                                <FocalPointSelector
+                                                    imageUrl={imageFile ? URL.createObjectURL(imageFile) : dishForm.image}
+                                                    value={dishForm.image_position}
+                                                    onChange={(pos) => setDishForm({ ...dishForm, image_position: pos })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <p style={{ fontSize: '0.8rem', marginBottom: '10px', fontWeight: 'bold' }}>Vista previa de la Tarjeta:</p>
+                                                <div style={{ transform: 'scale(0.8)', transformOrigin: 'top left', width: '350px' }}>
+                                                    <DishCard dish={{ ...dishForm, image: imageFile ? URL.createObjectURL(imageFile) : dishForm.image }} />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
+                                    <div className={styles.inputGroup}>
+                                        <label>Alérgenos</label>
+                                        <input placeholder="Ej. Gluten, Lactosa (separados por coma)" value={dishForm.allergens} onChange={e => setDishForm({ ...dishForm, allergens: e.target.value })} className={styles.input} maxLength={300} />
+                                    </div>
+                                    <div className={`${styles.inputGroup}`} style={{ gridColumn: '1 / -1' }}>
+                                        <label>Descripción</label>
+                                        <textarea placeholder="Describe el plato..." value={dishForm.description} onChange={e => setDishForm({ ...dishForm, description: e.target.value })} className={`${styles.input} ${styles.textarea}`} maxLength={500} />
+                                    </div>
                                 </div>
-                                <div className={styles.inputGroup}>
-                                    <label>Alérgenos</label>
-                                    <input placeholder="Ej. Gluten, Lactosa (separados por coma)" value={dishForm.allergens} onChange={e => setDishForm({ ...dishForm, allergens: e.target.value })} className={styles.input} maxLength={300} />
+                            ) : (
+                                <div className={styles.formGrid}>
+                                    <p style={{ gridColumn: '1 / -1', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                                        Campos opcionales. Si se dejan vacíos, la web mostrará el texto en castellano para este idioma.
+                                    </p>
+                                    <div className={styles.inputGroup}>
+                                        <label>Nombre del Plato</label>
+                                        <input
+                                            placeholder={dishForm.name}
+                                            value={dishForm.translations?.[dishLangTab]?.name || ''}
+                                            onChange={e => updateDishTranslation(dishLangTab, 'name', e.target.value)}
+                                            className={styles.input}
+                                            maxLength={100}
+                                        />
+                                    </div>
+                                    <div className={styles.inputGroup}>
+                                        <label>Tamaño / Porción</label>
+                                        <input
+                                            placeholder={dishForm.portionSize}
+                                            value={dishForm.translations?.[dishLangTab]?.portionSize || ''}
+                                            onChange={e => updateDishTranslation(dishLangTab, 'portionSize', e.target.value)}
+                                            className={styles.input}
+                                            maxLength={50}
+                                        />
+                                    </div>
+                                    <div className={`${styles.inputGroup}`} style={{ gridColumn: '1 / -1' }}>
+                                        <label>Descripción</label>
+                                        <textarea
+                                            placeholder={dishForm.description}
+                                            value={dishForm.translations?.[dishLangTab]?.description || ''}
+                                            onChange={e => updateDishTranslation(dishLangTab, 'description', e.target.value)}
+                                            className={`${styles.input} ${styles.textarea}`}
+                                            maxLength={500}
+                                        />
+                                    </div>
                                 </div>
-                                <div className={`${styles.inputGroup}`} style={{ gridColumn: '1 / -1' }}>
-                                    <label>Descripción</label>
-                                    <textarea placeholder="Describe el plato..." value={dishForm.description} onChange={e => setDishForm({ ...dishForm, description: e.target.value })} className={`${styles.input} ${styles.textarea}`} maxLength={500} />
-                                </div>
-                            </div>
+                            )}
                             <button type="submit" className={styles.submitBtn}>{editingDishId ? 'Actualizar' : 'Guardar'}</button>
                         </form>
                     )}
@@ -508,25 +569,43 @@ const AdminDashboard = () => {
                 <div className={styles.categoryPanel}>
                     <form onSubmit={handleSaveCategory} className={styles.formPanel}>
                         <h3>{editingCategoryId ? 'Editar Categoría' : 'Nueva Categoría'}</h3>
-                        <div className={styles.formGrid}>
-                            <div className={styles.inputGroup}>
-                                <label>Nombre de la Categoría</label>
-                                <input placeholder="Nombre Categoría" value={categoryForm.name} onChange={e => setCategoryForm({ ...categoryForm, name: e.target.value })} className={styles.input} required />
+                        <LangTabBar active={categoryLangTab} onChange={setCategoryLangTab} />
+                        {categoryLangTab === 'es' ? (
+                            <div className={styles.formGrid}>
+                                <div className={styles.inputGroup}>
+                                    <label>Nombre de la Categoría</label>
+                                    <input placeholder="Nombre Categoría" value={categoryForm.name} onChange={e => setCategoryForm({ ...categoryForm, name: e.target.value })} className={styles.input} required />
+                                </div>
+                                <div className={styles.inputGroup}>
+                                    <label>Categoría Padre (opcional)</label>
+                                    <select
+                                        value={categoryForm.parent_id}
+                                        onChange={e => setCategoryForm({ ...categoryForm, parent_id: e.target.value })}
+                                        className={styles.select}
+                                    >
+                                        <option value="">-- Sin categoría padre (Principal) --</option>
+                                        {(categories || []).filter(c => !c.parent_id && c.id !== editingCategoryId).map(cat => (
+                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
-                            <div className={styles.inputGroup}>
-                                <label>Categoría Padre (opcional)</label>
-                                <select
-                                    value={categoryForm.parent_id}
-                                    onChange={e => setCategoryForm({ ...categoryForm, parent_id: e.target.value })}
-                                    className={styles.select}
-                                >
-                                    <option value="">-- Sin categoría padre (Principal) --</option>
-                                    {(categories || []).filter(c => !c.parent_id && c.id !== editingCategoryId).map(cat => (
-                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                    ))}
-                                </select>
+                        ) : (
+                            <div className={styles.formGrid}>
+                                <p style={{ gridColumn: '1 / -1', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                                    Campo opcional. Si se deja vacío, la web mostrará el nombre en castellano para este idioma.
+                                </p>
+                                <div className={styles.inputGroup}>
+                                    <label>Nombre de la Categoría</label>
+                                    <input
+                                        placeholder={categoryForm.name}
+                                        value={categoryForm.translations?.[categoryLangTab]?.name || ''}
+                                        onChange={e => updateCategoryTranslation(categoryLangTab, 'name', e.target.value)}
+                                        className={styles.input}
+                                    />
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         <div className={styles.inputGroup} style={{ gridColumn: '1 / -1', marginTop: '10px' }}>
                             <label>Imagen de Categoría</label>
