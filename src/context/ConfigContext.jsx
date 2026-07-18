@@ -12,7 +12,8 @@ const DEFAULT_CONFIG = {
     showName: true,
     icon: '/restaurant-logo.png',
     themeId: 'classic',
-    subtitle: 'Discover our delicious menu and unique flavors'
+    subtitle: 'Discover our delicious menu and unique flavors',
+    translations: {}
 };
 
 export const ConfigProvider = ({ children }) => {
@@ -35,7 +36,8 @@ export const ConfigProvider = ({ children }) => {
                     showName: data.show_name,
                     icon: data.icon || '/restaurant-logo.png',
                     themeId: data.theme_id || 'classic',
-                    subtitle: data.subtitle || 'Discover our delicious menu and unique flavors'
+                    subtitle: data.subtitle || 'Discover our delicious menu and unique flavors',
+                    translations: data.translations || {}
                 });
                 setConfigId(data.id);
             } else if (error && error.code !== 'PGRST116') {
@@ -130,7 +132,8 @@ export const ConfigProvider = ({ children }) => {
             showName: 'show_name',
             icon: 'icon',
             themeId: 'theme_id',
-            subtitle: 'subtitle'
+            subtitle: 'subtitle',
+            translations: 'translations'
         };
 
         const dbKey = dbKeyMap[key];
@@ -151,6 +154,7 @@ export const ConfigProvider = ({ children }) => {
                     icon: config.icon,
                     theme_id: config.themeId,
                     subtitle: config.subtitle,
+                    translations: config.translations,
                     [dbKey]: value
                 };
 

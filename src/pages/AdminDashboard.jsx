@@ -68,6 +68,7 @@ const AdminDashboard = () => {
     const [imageFile, setImageFile] = useState(null);
     const [dishLangTab, setDishLangTab] = useState('es');
     const [categoryLangTab, setCategoryLangTab] = useState('es');
+    const [brandingLangTab, setBrandingLangTab] = useState('es');
 
     const [editingCategoryId, setEditingCategoryId] = useState(null);
     const [categoryForm, setCategoryForm] = useState({ name: '', image: '', parent_id: '', image_position: 'center', translations: {} });
@@ -698,6 +699,27 @@ const AdminDashboard = () => {
                                     onChange={(e) => updateConfig('showName', e.target.checked)}
                                     style={{ marginLeft: '10px', transform: 'scale(1.5)' }}
                                 />
+                            </div>
+                            <div className={styles.inputGroup} style={{ gridColumn: '1 / -1' }}>
+                                <label>Subtítulo (debajo del título "Nuestra Carta")</label>
+                                <LangTabBar active={brandingLangTab} onChange={setBrandingLangTab} />
+                                {brandingLangTab === 'es' ? (
+                                    <input
+                                        value={config.subtitle}
+                                        onChange={(e) => updateConfig('subtitle', e.target.value)}
+                                        className={styles.input}
+                                    />
+                                ) : (
+                                    <input
+                                        placeholder={config.subtitle}
+                                        value={config.translations?.[brandingLangTab]?.subtitle || ''}
+                                        onChange={(e) => updateConfig('translations', {
+                                            ...config.translations,
+                                            [brandingLangTab]: { ...config.translations?.[brandingLangTab], subtitle: e.target.value }
+                                        })}
+                                        className={styles.input}
+                                    />
+                                )}
                             </div>
                             <div className={styles.inputGroup}>
                                 <label>Logo / Icono</label>

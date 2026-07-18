@@ -14,7 +14,7 @@ const Home = () => {
     return (
         <div className={styles.container}>
             <h1 className={styles.title}>{t('home.title')}</h1>
-            <p className={styles.subtitle}>{config.subtitle || t('home.defaultSubtitle')}</p>
+            <p className={styles.subtitle}>{localizedField(config, 'subtitle', locale) || t('home.defaultSubtitle')}</p>
 
             <div className={styles.grid}>
                 {categories.filter(cat => cat.isVisible !== false && !cat.parent_id).map((cat) => (
