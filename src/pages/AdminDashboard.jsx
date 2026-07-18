@@ -180,7 +180,7 @@ const AdminDashboard = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const handleSaveDish = (e) => {
+    const handleSaveDish = async (e) => {
         e.preventDefault();
         const priceError = validatePrice(dishForm.price);
         if (priceError) { alert(priceError); return; }
@@ -191,11 +191,9 @@ const AdminDashboard = () => {
         };
 
         if (editingDishId) {
-            updateDish(editingDishId, formattedDish, imageFile);
-            alert('Plato actualizado');
+            await updateDish(editingDishId, formattedDish, imageFile);
         } else {
-            addDish(formattedDish, imageFile);
-            alert('Plato añadido');
+            await addDish(formattedDish, imageFile);
         }
         resetForm();
     };

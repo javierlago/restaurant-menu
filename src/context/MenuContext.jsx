@@ -103,6 +103,7 @@ export const MenuProvider = ({ children }) => {
 
     const updateDish = async (id, updatedFields, imageFile) => {
         let imageUrl = updatedFields.image;
+        let imageError = null;
 
         if (imageFile) {
             try {
@@ -112,7 +113,7 @@ export const MenuProvider = ({ children }) => {
                 const path = `${id}/${Date.now()}.${ext}`;
                 imageUrl = await uploadImage(imageFile, path, 'dish-images');
             } catch (error) {
-                alert('Error al subir la imagen. El plato se actualizará sin la nueva imagen.');
+                imageError = error;
             }
         }
 
@@ -130,8 +131,15 @@ export const MenuProvider = ({ children }) => {
         if (error) {
             console.error('Error updating dish:', error);
             alert('No se pudo actualizar el plato. Inténtalo de nuevo.');
+            return;
+        }
+
+        fetchData();
+
+        if (imageError) {
+            alert('Plato actualizado, pero falló la subida de la nueva imagen.');
         } else {
-            fetchData();
+            alert('Plato actualizado');
         }
     };
 
@@ -165,6 +173,7 @@ export const MenuProvider = ({ children }) => {
         }
 
         const createdDish = data;
+        let imageError = null;
 
         if (imageFile) {
             try {
@@ -179,11 +188,17 @@ export const MenuProvider = ({ children }) => {
                     .eq('id', createdDish.id);
 
             } catch (uploadError) {
-                alert('Plato creado, pero falló la subida de imagen: ' + uploadError.message);
+                imageError = uploadError;
             }
         }
 
         fetchData();
+
+        if (imageError) {
+            alert('Plato creado, pero falló la subida de imagen: ' + imageError.message);
+        } else {
+            alert('Plato añadido');
+        }
     };
 
     const deleteDish = async (id) => {
