@@ -69,6 +69,8 @@ const AdminDashboard = () => {
     const [dishLangTab, setDishLangTab] = useState('es');
     const [categoryLangTab, setCategoryLangTab] = useState('es');
     const [brandingLangTab, setBrandingLangTab] = useState('es');
+    const [isSavingDish, setIsSavingDish] = useState(false);
+    const [isSavingCategory, setIsSavingCategory] = useState(false);
 
     const [editingCategoryId, setEditingCategoryId] = useState(null);
     const [categoryForm, setCategoryForm] = useState({ name: '', image: '', parent_id: '', image_position: 'center', translations: {} });
@@ -190,6 +192,7 @@ const AdminDashboard = () => {
 
     const handleSaveDish = async (e) => {
         e.preventDefault();
+        if (isSavingDish) return;
         const priceError = validatePrice(dishForm.price);
         if (priceError) { showToast(priceError, 'error'); return; }
         const formattedDish = {
@@ -198,12 +201,17 @@ const AdminDashboard = () => {
             allergens: parseAllergens(dishForm.allergens)
         };
 
-        if (editingDishId) {
-            await updateDish(editingDishId, formattedDish, imageFile);
-        } else {
-            await addDish(formattedDish, imageFile);
+        setIsSavingDish(true);
+        try {
+            if (editingDishId) {
+                await updateDish(editingDishId, formattedDish, imageFile);
+            } else {
+                await addDish(formattedDish, imageFile);
+            }
+            resetForm();
+        } finally {
+            setIsSavingDish(false);
         }
-        resetForm();
     };
 
     const resetForm = () => {
@@ -239,17 +247,23 @@ const AdminDashboard = () => {
 
     const handleSaveCategory = async (e) => {
         e.preventDefault();
+        if (isSavingCategory) return;
         if (!categoryForm.name) return;
 
-        if (editingCategoryId) {
-            await updateCategory(editingCategoryId, categoryForm, categoryImageFile);
-            setEditingCategoryId(null);
-        } else {
-            await addCategory(categoryForm.name, categoryImageFile, categoryForm.parent_id || null, categoryForm.image_position, categoryForm.translations);
+        setIsSavingCategory(true);
+        try {
+            if (editingCategoryId) {
+                await updateCategory(editingCategoryId, categoryForm, categoryImageFile);
+                setEditingCategoryId(null);
+            } else {
+                await addCategory(categoryForm.name, categoryImageFile, categoryForm.parent_id || null, categoryForm.image_position, categoryForm.translations);
+            }
+            setCategoryForm({ name: '', image: '', parent_id: '', image_position: 'center', translations: {} });
+            setCategoryImageFile(null);
+            setCategoryLangTab('es');
+        } finally {
+            setIsSavingCategory(false);
         }
-        setCategoryForm({ name: '', image: '', parent_id: '', image_position: 'center', translations: {} });
-        setCategoryImageFile(null);
-        setCategoryLangTab('es');
     };
 
     const handleDragEnd = (event) => {
@@ -541,7 +555,9 @@ const AdminDashboard = () => {
                                     </div>
                                 </div>
                             )}
-                            <button type="submit" className={styles.submitBtn}>{editingDishId ? 'Actualizar' : 'Guardar'}</button>
+                            <button type="submit" className={styles.submitBtn} disabled={isSavingDish}>
+                                {isSavingDish ? 'Guardando...' : (editingDishId ? 'Actualizar' : 'Guardar')}
+                            </button>
                         </form>
                     )}
 
@@ -647,8 +663,8 @@ const AdminDashboard = () => {
                             </div>
                         </div>
 
-                        <button type="submit" className={styles.submitBtn} style={{ marginTop: '20px' }}>
-                            {editingCategoryId ? 'Actualizar Categoría' : 'Añadir Categoría'}
+                        <button type="submit" className={styles.submitBtn} style={{ marginTop: '20px' }} disabled={isSavingCategory}>
+                            {isSavingCategory ? 'Guardando...' : (editingCategoryId ? 'Actualizar Categoría' : 'Añadir Categoría')}
                         </button>
                     </form>
                     <div className={styles.list}>
@@ -687,7 +703,7 @@ const AdminDashboard = () => {
                                 <label>Nombre del Restaurante</label>
                                 <input
                                     value={config.restaurantName}
-                                    onChange={(e) => updateConfig('restaurantName', e.target.value)}
+                                    onChange={(e) => updateConfig('restaurantName', e.target.value, { debounce: true })}
                                     className={styles.input}
                                 />
                             </div>
@@ -706,7 +722,7 @@ const AdminDashboard = () => {
                                 {brandingLangTab === 'es' ? (
                                     <input
                                         value={config.subtitle}
-                                        onChange={(e) => updateConfig('subtitle', e.target.value)}
+                                        onChange={(e) => updateConfig('subtitle', e.target.value, { debounce: true })}
                                         className={styles.input}
                                     />
                                 ) : (
@@ -716,7 +732,7 @@ const AdminDashboard = () => {
                                         onChange={(e) => updateConfig('translations', {
                                             ...config.translations,
                                             [brandingLangTab]: { ...config.translations?.[brandingLangTab], subtitle: e.target.value }
-                                        })}
+                                        }, { debounce: true })}
                                         className={styles.input}
                                     />
                                 )}

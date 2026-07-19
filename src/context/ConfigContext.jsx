@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { getThemeById } from '../data/themes';
 import { supabase } from '../supabase/client';
 import { validateImageFile, safeColor } from '../utils/validation';
@@ -20,6 +20,12 @@ export const ConfigProvider = ({ children }) => {
     const [config, setConfig] = useState(DEFAULT_CONFIG);
     const [loading, setLoading] = useState(true);
     const [configId, setConfigId] = useState(null); // database ID
+    const debounceTimers = useRef({});
+
+    useEffect(() => {
+        const timers = debounceTimers.current;
+        return () => Object.values(timers).forEach(clearTimeout);
+    }, []);
 
     // Fetch config from Supabase
     const fetchConfig = async () => {
@@ -119,26 +125,17 @@ export const ConfigProvider = ({ children }) => {
 
     }, [config]);
 
-    const updateConfig = async (key, value) => {
-        // Optimistic update
-        setConfig(prev => ({
-            ...prev,
-            [key]: value
-        }));
+    // Map frontend keys to DB columns
+    const CONFIG_DB_KEY_MAP = {
+        restaurantName: 'restaurant_name',
+        showName: 'show_name',
+        icon: 'icon',
+        themeId: 'theme_id',
+        subtitle: 'subtitle',
+        translations: 'translations'
+    };
 
-        // Map frontend keys to DB columns
-        const dbKeyMap = {
-            restaurantName: 'restaurant_name',
-            showName: 'show_name',
-            icon: 'icon',
-            themeId: 'theme_id',
-            subtitle: 'subtitle',
-            translations: 'translations'
-        };
-
-        const dbKey = dbKeyMap[key];
-        if (!dbKey) return;
-
+    const writeConfig = async (dbKey, value) => {
         try {
             if (configId) {
                 await supabase
@@ -169,6 +166,26 @@ export const ConfigProvider = ({ children }) => {
         } catch (error) {
             console.error('Error updating config:', error);
             // Revert optimistic update if needed (omitted for brevity)
+        }
+    };
+
+    // `debounce: true` delays the write (not the on-screen update) so fast typing
+    // in text fields doesn't fire a DB write + realtime broadcast per keystroke.
+    const updateConfig = (key, value, { debounce = false } = {}) => {
+        // Optimistic update
+        setConfig(prev => ({
+            ...prev,
+            [key]: value
+        }));
+
+        const dbKey = CONFIG_DB_KEY_MAP[key];
+        if (!dbKey) return;
+
+        if (debounce) {
+            clearTimeout(debounceTimers.current[key]);
+            debounceTimers.current[key] = setTimeout(() => writeConfig(dbKey, value), 600);
+        } else {
+            writeConfig(dbKey, value);
         }
     };
 
